@@ -16,8 +16,6 @@ class MapCode {
     // nếu thời gian hiện tại lớn hơn thời gian hết hạn thì trả về false
     return this.map.get(key).value === value;
   }
-
-  
 }
 
 module.exports = new MapCode();

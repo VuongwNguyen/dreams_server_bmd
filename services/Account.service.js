@@ -161,6 +161,7 @@ class AccountService {
     }
 
     user.password = bcrypt.hashSync(newPassword, salt);
+    await user.save();
     return true;
   }
 }

@@ -7,6 +7,7 @@ const { sendMail, MapCode, GetVerifyCode } = require("../mail");
 const salt = bcrypt.genSaltSync(10);
 const secret_key = process.env.SECRET_KEY || "secret_key";
 const expiresIn = process.env.EXPIRES_IN || "1d";
+const forgotPassword = new Map();
 
 class AccountService {
   async register(data) {
@@ -142,7 +143,7 @@ class AccountService {
     return true;
   }
 
-  async resetPassword({ code, newPassword, email }) {
+  async resetPassword({ newPassword, email }) {
     const user = await Account.findOne({ email });
     if (!user) {
       throw new ErrorResponse({
@@ -151,17 +152,79 @@ class AccountService {
       });
     }
 
-    console.log(MapCode.map.get(user._id.toString()), code);
+    if (!forgotPassword?.get(user._id.toString())?.verify) {
+      throw new ErrorResponse({
+        message: "Reset password link is expired",
+        code: 403,
+      });
+    }
 
-    if (!MapCode.equals(user._id.toString(), code)) {
+    user.password = bcrypt.hashSync(newPassword, salt);
+    await user.save();
+    return true;
+  }
+
+  async sendCodeResetPassword(email) {
+    const user = await Account.findOne({ email });
+
+    if (!user) {
+      throw new ErrorResponse({
+        message: "User not found",
+        code: 404,
+      });
+    }
+
+    const code = Math.floor(Math.random() * 9000).toString();
+
+    forgotPassword.set(user._id.toString(), {
+      code,
+      expIn: Date.now() + 1000 * 60,
+      verify: false,
+    });
+
+    sendMail(GetVerifyCode(code, email));
+
+    return true;
+  }
+
+  async verifyCodeResetPassword({code, email}) {
+    if (!code) {
+      throw new ErrorResponse({
+        message: "Code is required",
+        code: 400,
+      });
+    }
+
+    const user = await Account.findOne({ email });
+
+    if (!user) {
+      throw new ErrorResponse({
+        message: "User not found",
+        code: 404,
+      });
+    }
+
+    const forgotPasswordData = forgotPassword.get(user._id.toString());
+
+    if (forgotPasswordData.expIn < Date.now()) {
+      throw new ErrorResponse({
+        message: "Code expired",
+        code: 401,
+      });
+    }
+
+    if (forgotPasswordData.code !== code) {
       throw new ErrorResponse({
         message: "Code is incorrect",
         code: 400,
       });
     }
 
-    user.password = bcrypt.hashSync(newPassword, salt);
-    await user.save();
+    forgotPassword.set(user._id.toString(), {
+      ...forgotPasswordData,
+      verify: true,
+    });
+
     return true;
   }
 }

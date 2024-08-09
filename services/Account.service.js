@@ -107,7 +107,7 @@ class AccountService {
         code: 400,
       });
 
-    if (MapCode.equals(user._id.toString(), code)) {
+    if (!MapCode.equals(user._id.toString(), code)) {
       // nếu code không đúng thì thông báo lỗi
       throw new ErrorResponse({
         message: "Code is incorrect",
@@ -124,7 +124,7 @@ class AccountService {
     if (!user) {
       throw new ErrorResponse({
         message: "User not found",
-        code: 403,
+        code: 404,
       });
     }
 
@@ -141,24 +141,6 @@ class AccountService {
     return true;
   }
 
-  async forgotPassword({ email }) {
-    const user = await Account.findOne({ email });
-
-    if (!user) {
-      throw new ErrorResponse({
-        message: "User not found",
-        code: 403,
-      });
-    }
-
-    let code = Math.floor(1000 + Math.random() * 9000).toString();
-
-    MapCode.set(user._id.toString(), code, 60 * 5 * 1000); // 5 minutes
-    sendMail(GetVerifyCode(code, email));
-
-    return true;
-  }
-
   async resetPassword({ code, newPassword, email }) {
     const user = await Account.findOne({ email });
     if (!user) {
@@ -167,6 +149,8 @@ class AccountService {
         code: 403,
       });
     }
+
+    console.log(MapCode.map.get(user._id.toString()), code);
 
     if (!MapCode.equals(user._id.toString(), code)) {
       throw new ErrorResponse({

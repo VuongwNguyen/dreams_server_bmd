@@ -12,11 +12,12 @@ class MapCode {
   }
 
   equals(key, value) {
-    if(!this.map.has(key)) return false;
-    return this.map.get(key) === value;// nếu giá trị của key trùng với value thì trả về true
-  }
+    if (!this.map.has(key)) return false;
+    if (this.map.get(key).expiresIn < Date.now()) return false;
 
-  
+    // nếu thời gian hiện tại lớn hơn thời gian hết hạn thì trả về false
+    return this.map.get(key) === value;
+  }
 }
 
 module.exports = new MapCode();

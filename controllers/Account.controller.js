@@ -50,11 +50,10 @@ class AccountController {
   }
 
   async resetPassword(req, res, next) {
-    const { code, newPassword, email } = req.body;
+    const { newPassword, email } = req.body;
 
-    await AccountService.resetPassword({ code, newPassword, email });
     return new SuccessfullyReponse({
-      data: {},
+      data: await AccountService.resetPassword({ newPassword, email }),
       message: "Reset password successfully",
       code: 200,
     }).json(res);
@@ -63,10 +62,33 @@ class AccountController {
   async changePassword(req, res, next) {
     const { oldPassword, newPassword } = req.body;
     const userId = req.user.id;
-    await AccountService.changePassword({ oldPassword, newPassword, userId });
     return new SuccessfullyReponse({
-      data: {},
+      data: await AccountService.changePassword({
+        oldPassword,
+        newPassword,
+        userId,
+      }),
       message: "Change password successfully",
+      code: 200,
+    }).json(res);
+  }
+
+  async sendCodeResetPassword(req, res, next) {
+    const { email } = req.body;
+
+    return new SuccessfullyReponse({
+      data: await AccountService.sendCodeResetPassword(email),
+      message: "Send code reset password successfully",
+      code: 200,
+    }).json(res);
+  }
+
+  async verifyCodeResetPassword(req, res, next) {
+    const { code, email } = req.body;
+
+    return new SuccessfullyReponse({
+      data: await AccountService.verifyCodeResetPassword({ code, email }),
+      message: "Verify code reset password successfully",
       code: 200,
     }).json(res);
   }

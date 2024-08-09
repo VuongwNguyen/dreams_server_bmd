@@ -11,25 +11,12 @@ class MapCode {
     }, tlt);
   }
 
-  get(key) {
-    return this.map.get(key);
-  }
-
-  delete(key) {
-    this.map.delete(key);
-  }
-
-  has(key) {
-    return this.map.has(key);
-  }
-
   equals(key, value) {
+    if(!this.map.has(key)) return false;
     return this.map.get(key) === value;// nếu giá trị của key trùng với value thì trả về true
   }
 
-  clear() {
-    this.map.clear();
-  }
+  
 }
 
 module.exports = new MapCode();

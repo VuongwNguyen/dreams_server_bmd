@@ -39,7 +39,7 @@ class AccountService {
   }
 
   async login(data) {
-    const { UserIF, password, fcm_token } = data;
+    const { UserIF, password } = data;
 
     const user = await Account.findOne({
       $or: [{ email: UserIF }, { phone: UserIF }],
@@ -77,7 +77,6 @@ class AccountService {
     });
 
     // save fcm_token after login
-    user.fcm_token = fcm_token;
     await user.save();
 
     return { token };
@@ -94,7 +93,7 @@ class AccountService {
     // create verify code
     let code = Math.floor(1000 + Math.random() * 9000).toString();
     // store code in redis and send mail
-    MapCode.set(user._id, code, 60 * 5); // 5 minutes
+    MapCode.set(user._id.toString(), code, 60 * 5 * 1000); // 5 minutes
     sendMail(GetVerifyCode(code, email));
     return true;
   }
@@ -108,7 +107,7 @@ class AccountService {
         code: 400,
       });
 
-    if (MapCode.equals(user._id, code)) {
+    if (MapCode.equals(user._id.toString(), code)) {
       // nếu code không đúng thì thông báo lỗi
       throw new ErrorResponse({
         message: "Code is incorrect",
@@ -117,6 +116,66 @@ class AccountService {
     }
     user.isVerified = true;
     await user.save();
+    return true;
+  }
+
+  async changePassword({ oldPassword, newPassword, userId }) {
+    const user = await Account.findOne({ _id: userId });
+    if (!user) {
+      throw new ErrorResponse({
+        message: "User not found",
+        code: 403,
+      });
+    }
+
+    const checkPassword = bcrypt.compareSync(oldPassword, user.password);
+    if (!checkPassword) {
+      throw new ErrorResponse({
+        message: "Old password is incorrect",
+        code: 400,
+      });
+    }
+
+    user.password = bcrypt.hashSync(newPassword, salt);
+    await user.save();
+    return true;
+  }
+
+  async forgotPassword({ email }) {
+    const user = await Account.findOne({ email });
+
+    if (!user) {
+      throw new ErrorResponse({
+        message: "User not found",
+        code: 403,
+      });
+    }
+
+    let code = Math.floor(1000 + Math.random() * 9000).toString();
+
+    MapCode.set(user._id.toString(), code, 60 * 5 * 1000); // 5 minutes
+    sendMail(GetVerifyCode(code, email));
+
+    return true;
+  }
+
+  async resetPassword({ code, newPassword, email }) {
+    const user = await Account.findOne({ email });
+    if (!user) {
+      throw new ErrorResponse({
+        message: "User not found",
+        code: 403,
+      });
+    }
+
+    if (!MapCode.equals(user._id.toString(), code)) {
+      throw new ErrorResponse({
+        message: "Code is incorrect",
+        code: 400,
+      });
+    }
+
+    user.password = bcrypt.hashSync(newPassword, salt);
     return true;
   }
 }

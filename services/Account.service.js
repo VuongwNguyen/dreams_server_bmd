@@ -93,7 +93,7 @@ class AccountService {
     // create verify code
     let code = Math.floor(1000 + Math.random() * 9000).toString();
     // store code in redis and send mail
-    MapCode.set(user._id.toString(), code, 60 * 5 * 1000); // 5 minutes
+    MapCode.set(user._id.toString(), code); // 5 minutes
     sendMail(GetVerifyCode(code, email));
     return true;
   }
@@ -114,6 +114,7 @@ class AccountService {
         code: 400,
       });
     }
+    MapCode.delete(user._id.toString());
     user.isVerified = true;
     await user.save();
     return true;

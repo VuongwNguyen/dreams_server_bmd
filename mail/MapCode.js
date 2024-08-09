@@ -10,17 +10,11 @@ class MapCode {
   }
 
   equals(key, value) {
-
     if (!this.map.has(key)) return false;
     if (this.map.get(key).expiresIn < Date.now()) return false;
-    console.log(this.map.get(key).value, value);
 
     // nếu thời gian hiện tại lớn hơn thời gian hết hạn thì trả về false
     return this.map.get(key).value === value;
-  }
-
-  delete(key) {
-    this.map.delete(key);
   }
 }
 

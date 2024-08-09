@@ -41,10 +41,32 @@ class AccountController {
 
   async sendVerifyEmail(req, res, next) {
     const { email } = req.body;
-    await AccountService.sendVerifyEmail( email );
+    await AccountService.sendVerifyEmail(email);
     return new SuccessfullyReponse({
       data: {},
       message: "Send verify email successfully",
+      code: 200,
+    }).json(res);
+  }
+
+  async resetPassword(req, res, next) {
+    const { code, newPassword, email } = req.body;
+
+    await AccountService.resetPassword({ code, newPassword, email });
+    return new SuccessfullyReponse({
+      data: {},
+      message: "Reset password successfully",
+      code: 200,
+    }).json(res);
+  }
+
+  async changePassword(req, res, next) {
+    const { oldPassword, newPassword } = req.body;
+    const userId = req.user.id;
+    await AccountService.changePassword({ oldPassword, newPassword, userId });
+    return new SuccessfullyReponse({
+      data: {},
+      message: "Change password successfully",
       code: 200,
     }).json(res);
   }

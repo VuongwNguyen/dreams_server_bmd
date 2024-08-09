@@ -93,7 +93,7 @@ class AccountService {
     // create verify code
     let code = Math.floor(1000 + Math.random() * 9000).toString();
     // store code in redis and send mail
-    MapCode.set(user._id.toString(), code, 60 * 5 * 1000); // 5 minutes
+    MapCode.set(user._id.toString(), code); // 5 minutes
     sendMail(GetVerifyCode(code, email));
     return true;
   }
@@ -107,13 +107,14 @@ class AccountService {
         code: 400,
       });
 
-    if (MapCode.equals(user._id.toString(), code)) {
+    if (!MapCode.equals(user._id.toString(), code)) {
       // nếu code không đúng thì thông báo lỗi
       throw new ErrorResponse({
         message: "Code is incorrect",
         code: 400,
       });
     }
+    MapCode.delete(user._id.toString());
     user.isVerified = true;
     await user.save();
     return true;
@@ -153,7 +154,7 @@ class AccountService {
 
     let code = Math.floor(1000 + Math.random() * 9000).toString();
 
-    MapCode.set(user._id.toString(), code, 60 * 5 * 1000); // 5 minutes
+    MapCode.set(user._id.toString(), code);
     sendMail(GetVerifyCode(code, email));
 
     return true;

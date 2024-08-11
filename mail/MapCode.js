@@ -3,19 +3,26 @@ class MapCode {
     this.map = new Map();
   }
 
+
   set(key, value) {
     console.log(key, value);
-    this.map.set(key, { value, expiresIn: Date.now() + 5 * 60 * 1000 });
-    // thêm key và value vào map, expiresIn là thời gian hiện tại cộng thêm 5 phút
+    const date = Date.now() + 5 * 60 * 1000;
+    this.map.set(key, { value, expiresIn: date });
+  }
+
+  get(key) {
+    return this.map.get(key);
   }
 
   equals(key, value) {
     if (!this.map.has(key)) return false;
     if (this.map.get(key).expiresIn < Date.now()) return false;
-
-    // nếu thời gian hiện tại lớn hơn thời gian hết hạn thì trả về false
     return this.map.get(key).value === value;
+  }
+
+  delete(key) {
+    this.map.delete(key);
   }
 }
 
-module.exports = new MapCode();
+module.exports = MapCode;

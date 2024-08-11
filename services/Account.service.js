@@ -7,7 +7,9 @@ const { sendMail, MapCode, GetVerifyCode } = require("../mail");
 const salt = bcrypt.genSaltSync(10);
 const secret_key = process.env.SECRET_KEY || "secret_key";
 const expiresIn = process.env.EXPIRES_IN || "1d";
-const forgotPassword = new Map();
+const code = Math.floor(1000 + Math.random() * 9000).toString();
+const forgotPassword = new MapCode();
+const verifyCode = new MapCode();
 
 class AccountService {
   async register(data) {
@@ -73,12 +75,9 @@ class AccountService {
       });
 
     // create token
-    const token = jwt.sign({ id: user._id }, secret_key, {
+    const token = jwt.sign({ _id: user._id }, secret_key, {
       expiresIn: expiresIn,
     });
-
-    // save fcm_token after login
-    await user.save();
 
     return { token };
   }
@@ -92,9 +91,8 @@ class AccountService {
       });
 
     // create verify code
-    let code = Math.floor(1000 + Math.random() * 9000).toString();
     // store code in redis and send mail
-    MapCode.set(user._id.toString(), code); // 5 minutes
+    verifyCode.set(user._id.toString(), code);
     sendMail(GetVerifyCode(code, email));
     return true;
   }
@@ -108,15 +106,15 @@ class AccountService {
         code: 400,
       });
 
-    if (!MapCode.equals(user._id.toString(), code)) {
+    if (!verifyCode.equals(user._id.toString(), code)) {
       // nếu code không đúng thì thông báo lỗi
       throw new ErrorResponse({
         message: "Code is incorrect",
         code: 400,
       });
     }
-    MapCode.delete(user._id.toString());
     user.isVerified = true;
+    verifyCode.delete(user._id.toString());
     await user.save();
     return true;
   }
@@ -126,7 +124,7 @@ class AccountService {
     if (!user) {
       throw new ErrorResponse({
         message: "User not found",
-        code: 404,
+        code: 400,
       });
     }
 
@@ -148,18 +146,26 @@ class AccountService {
     if (!user) {
       throw new ErrorResponse({
         message: "User not found",
-        code: 403,
+        code: 400,
       });
     }
 
-    if (!forgotPassword?.get(user._id.toString())?.verify) {
+    if (forgotPassword.get(user._id.toString())?.expiresIn < Date.now()) {
       throw new ErrorResponse({
-        message: "Reset password link is expired",
-        code: 403,
+        message: "Request reset password is expired",
+        code: 400,
+      });
+    }
+    if (!forgotPassword?.get(user._id.toString())?.value?.verify) {
+      console.log(forgotPassword.get(user._id.toString()));
+      throw new ErrorResponse({
+        message: "Request reset password is not verified",
+        code: 400,
       });
     }
 
     user.password = bcrypt.hashSync(newPassword, salt);
+    forgotPassword.delete(user._id.toString());
     await user.save();
     return true;
   }
@@ -170,24 +176,18 @@ class AccountService {
     if (!user) {
       throw new ErrorResponse({
         message: "User not found",
-        code: 404,
+        code: 400,
       });
     }
 
-    const code = Math.floor(Math.random() * 9000).toString();
-
-    forgotPassword.set(user._id.toString(), {
-      code,
-      expIn: Date.now() + 1000 * 60,
-      verify: false,
-    });
+    forgotPassword.set(user._id.toString(), code);
 
     sendMail(GetVerifyCode(code, email));
 
     return true;
   }
 
-  async verifyCodeResetPassword({code, email}) {
+  async verifyCodeResetPassword({ code, email }) {
     if (!code) {
       throw new ErrorResponse({
         message: "Code is required",
@@ -200,30 +200,28 @@ class AccountService {
     if (!user) {
       throw new ErrorResponse({
         message: "User not found",
-        code: 404,
+        code: 400,
       });
     }
 
     const forgotPasswordData = forgotPassword.get(user._id.toString());
 
-    if (forgotPasswordData.expIn < Date.now()) {
+    if (forgotPasswordData.expiresIn < Date.now()) {
       throw new ErrorResponse({
         message: "Code expired",
-        code: 401,
+        code: 400,
       });
     }
 
-    if (forgotPasswordData.code !== code) {
+    if (forgotPasswordData.value !== code) {
       throw new ErrorResponse({
         message: "Code is incorrect",
         code: 400,
       });
     }
 
-    forgotPassword.set(user._id.toString(), {
-      ...forgotPasswordData,
-      verify: true,
-    });
+    forgotPassword.delete(user._id.toString());
+    forgotPassword.set(user._id.toString(), { verify: true });
 
     return true;
   }

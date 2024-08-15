@@ -12,7 +12,6 @@ class AccountController {
       password,
     });
     return new SuccessfullyReponse({
-      data: {},
       message: "Register successfully",
       code: 201,
     }).json(res);
@@ -32,7 +31,6 @@ class AccountController {
     const { code, email } = req.body;
     await AccountService.verifyEmail({ code, email });
     return new SuccessfullyReponse({
-      data: {},
       message: "Verify successfully",
       code: 200,
     }).json(res);
@@ -42,7 +40,6 @@ class AccountController {
     const { email } = req.body;
     await AccountService.sendVerifyEmail(email);
     return new SuccessfullyReponse({
-      data: {},
       message: "Send verify email successfully",
       code: 200,
     }).json(res);
@@ -52,7 +49,6 @@ class AccountController {
     const { newPassword, email } = req.body;
     await AccountService.resetPassword({ newPassword, email });
     return new SuccessfullyReponse({
-      data: {},
       message: "Reset password successfully",
       code: 200,
     }).json(res);
@@ -67,7 +63,6 @@ class AccountController {
       userId,
     });
     return new SuccessfullyReponse({
-      data: {},
       message: "Change password successfully",
       code: 200,
     }).json(res);
@@ -77,7 +72,6 @@ class AccountController {
     const { email } = req.body;
     await AccountService.sendCodeResetPassword(email);
     return new SuccessfullyReponse({
-      data: {},
       message: "Send code reset password successfully",
       code: 200,
     }).json(res);
@@ -87,8 +81,27 @@ class AccountController {
     const { code, email } = req.body;
     await AccountService.verifyCodeResetPassword({ code, email });
     return new SuccessfullyReponse({
-      data: {},
       message: "Verify code reset password successfully",
+      code: 200,
+    }).json(res);
+  }
+
+  async renewTokens(req, res, next) {
+    const { refreshToken } = req.body;
+    const token = await AccountService.renewTokens(refreshToken);
+    return new SuccessfullyReponse({
+      data: { token },
+      message: "Renew token successfully",
+      code: 200,
+    }).json(res);
+  }
+
+  async logout(req, res, next) {
+    const { userId } = req.user;
+
+    await AccountService.logout(userId);
+    new SuccessfullyReponse({
+      message: "Logout successfully",
       code: 200,
     }).json(res);
   }

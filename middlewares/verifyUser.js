@@ -1,7 +1,6 @@
 const { ErrorResponse } = require("../core/reponseHandle");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
-const secret_key = process.env.SECRET_KEY || "secret_key";
 
 const verifyUser = (req, res, next) => {
   const token = req?.headers?.authorization?.split(" ")[1];
@@ -13,7 +12,7 @@ const verifyUser = (req, res, next) => {
     });
   }
 
-  jwt.verify(token, secret_key, (err, decode) => {
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decode) => {
     if (err) {
       next(err);
     }

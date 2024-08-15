@@ -3,10 +3,12 @@ const { ErrorResponse } = require("../core/reponseHandle");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { sendMail, MapCode, GetVerifyCode } = require("../mail");
+const { generateTokens } = require("./token.service");
+const UserModel = require("../models/UserModel");
+const keystoreService = require("./keystore.service");
+const KeyStore = require("../models/KeyStore");
 
 const salt = bcrypt.genSaltSync(10);
-const secret_key = process.env.SECRET_KEY || "secret_key";
-const expiresIn = process.env.EXPIRES_IN || "1d";
 const code = Math.floor(1000 + Math.random() * 9000).toString();
 const forgotPassword = new MapCode();
 const verifyCode = new MapCode();
@@ -75,11 +77,18 @@ class AccountService {
       });
 
     // create token
-    const token = jwt.sign({ _id: user._id }, secret_key, {
-      expiresIn: expiresIn,
+    const payload = {
+      userId: user._id,
+    };
+
+    const tokens = generateTokens(payload);
+
+    await keystoreService.upsertKeyStore({
+      userId: user._id,
+      refreshToken: tokens.refreshToken,
     });
 
-    return { token };
+    return tokens;
   }
 
   async sendVerifyEmail(email) {
@@ -224,6 +233,64 @@ class AccountService {
     forgotPassword.set(user._id.toString(), { verify: true });
 
     return true;
+  }
+
+  async renewTokens(refreshToken) {
+    try {
+      const decode = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+      const user = await UserModel.findOne({ _id: decode.userId }).lean();
+
+      const keyStore = await KeyStore.findOne({ userId: user._id });
+
+      if (
+        !keyStore ||
+        keyStore.current_refresh_token !== refreshToken ||
+        keyStore.black_list_refresh_token.includes(refreshToken)
+      ) {
+        await keystoreService.removeKeyStore(user._id);
+        throw new ErrorResponse({
+          message: "Something went wrong, please login",
+        });
+      }
+
+      if (!user) {
+        throw new ErrorResponse({
+          message: "User not found",
+          code: 400,
+        });
+      }
+
+      const payload = {
+        userId: user._id,
+      };
+
+      const tokens = generateTokens(payload);
+
+      await keystoreService.addRefreshTokenIntoBlackList({
+        userId: user._id,
+        newRefreshToken: tokens.refreshToken,
+        refreshToken: refreshToken,
+      });
+
+      return tokens;
+    } catch (error) {
+      if (
+        error.message === "jwt expired" ||
+        error.message === "invalid signature"
+      ) {
+        throw new ErrorResponse({
+          message: "Something went wrong, please login",
+          code: 403,
+        });
+      }
+
+      throw error;
+    }
+  }
+
+  async logout(userId) {
+    return await keystoreService.removeKeyStore(userId);
   }
 }
 

@@ -24,7 +24,7 @@ const AccountSchema = new Schema(
     },
     fcm_token: {
       type: String,
-      required: false,  
+      required: false,
     },
     isActivated: {
       type: Boolean,
@@ -47,5 +47,6 @@ const AccountSchema = new Schema(
     timestamps: true,
   }
 );
+const Account = model("Account", AccountSchema);
 
-module.exports = model("Account", AccountSchema);
+module.exports = Account;

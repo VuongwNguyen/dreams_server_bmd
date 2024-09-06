@@ -1,12 +1,10 @@
-const { Account } = require("../models");
+const { Account, KeyStore} = require("../models");
 const { ErrorResponse } = require("../core/reponseHandle");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { sendMail, MapCode, GetVerifyCode } = require("../mail");
 const { generateTokens } = require("./token.service");
-const UserModel = require("../models/UserModel");
 const keystoreService = require("./keystore.service");
-const KeyStore = require("../models/KeyStore");
 
 const salt = bcrypt.genSaltSync(10);
 const code = Math.floor(1000 + Math.random() * 9000).toString();
@@ -239,7 +237,7 @@ class AccountService {
     try {
       const decode = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
-      const user = await UserModel.findOne({ _id: decode.userId }).lean();
+      const user = await Account.findOne({ _id: decode.userId }).lean();
 
       const keyStore = await KeyStore.findOne({ userId: user._id });
 

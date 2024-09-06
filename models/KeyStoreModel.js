@@ -1,7 +1,7 @@
 const { model, Schema } = require("mongoose");
 
 const keyStoreSchema = new Schema({
-  userId: {
+  user_id: {
     type: Schema.Types.ObjectId,
     ref: "Account",
     required: true,
@@ -14,5 +14,6 @@ const keyStoreSchema = new Schema({
     type: [String],
   },
 });
+const KeyStore = model("KeyStore", keyStoreSchema);
 
-module.exports = model("KeyStore", keyStoreSchema);
+module.exports = KeyStore;

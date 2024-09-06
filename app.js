@@ -6,7 +6,26 @@ var logger = require("morgan");
 var app = express();
 var cors = require("cors");
 var helmet = require("helmet");
-
+const {
+  Account,
+  Follow,
+  Avatar,
+  Information,
+  PostImage,
+  Post,
+  KeyStore,
+  PostViewed,
+  Comment,
+  Hashtag,
+  PostHashtag,
+  CommentLike,
+  PostLike,
+  Message,
+  Room,
+  PostTag,
+  Member,
+  MessageImg,
+} = require("./models");
 
 const database = require("./config/connectToDatabase");
 
@@ -23,7 +42,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/api", require("./routes"));
 
 // connect to database
-database.connectToDatabase();
+database.connect();
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
@@ -37,9 +56,9 @@ app.use(function (err, req, res, next) {
 
   res.status(err.code || 500).json({
     message: err.message,
-    status: err.status
+    status: err.status,
   });
-  console.log(err.stack)
+  console.log(err.stack);
 });
 
 module.exports = app;

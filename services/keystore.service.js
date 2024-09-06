@@ -1,4 +1,4 @@
-const KeyStore = require("../models/KeyStore");
+const { KeyStore } = require("../models");
 
 class KeyStoreService {
   async upsertKeyStore({ userId, refreshToken }) {

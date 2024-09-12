@@ -42,6 +42,28 @@ const AccountSchema = new Schema(
       default: "user",
       enum: ["user", "superadmin"],
     },
+    avatar: {
+      type: {
+        url: { type: String, required: true },
+        public_id: { type: String, required: true },
+      },
+      required: false,
+    },
+    infomation: [
+      {
+        type: {
+          key: { type: String, required: true, enum: [] },
+          value: { type: String, required: true },
+          privacy_status: {
+            type: String,
+            required: true,
+            default: "public",
+            enum: ["public", "private"],
+          },
+        },
+        required: false,
+      },
+    ],
   },
   {
     timestamps: true,

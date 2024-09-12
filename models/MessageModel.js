@@ -20,6 +20,15 @@ const MessageSchema = new Schema(
       type: Date,
       default: Date.now,
     },
+    images: [
+      {
+        type: {
+          url: { type: String, required: true },
+          public_id: { type: String, required: true },
+        },
+        required: false,
+      },
+    ],
   },
   {
     timestamps: true,

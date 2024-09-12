@@ -6,26 +6,7 @@ var logger = require("morgan");
 var app = express();
 var cors = require("cors");
 var helmet = require("helmet");
-const {
-  Account,
-  Follow,
-  Avatar,
-  Information,
-  PostImage,
-  Post,
-  KeyStore,
-  PostViewed,
-  Comment,
-  Hashtag,
-  PostHashtag,
-  CommentLike,
-  PostLike,
-  Message,
-  Room,
-  PostTag,
-  Member,
-  MessageImg,
-} = require("./models");
+
 
 const database = require("./config/connectToDatabase");
 

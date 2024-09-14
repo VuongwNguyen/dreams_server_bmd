@@ -7,7 +7,6 @@ var app = express();
 var cors = require("cors");
 var helmet = require("helmet");
 
-
 const database = require("./config/connectToDatabase");
 
 // app configuration

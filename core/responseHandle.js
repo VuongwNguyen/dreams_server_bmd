@@ -1,8 +1,9 @@
-class SuccessfullyReponse {
-    constructor({ data, message, status = true }) {
+class SuccessfullyResponse {
+    constructor({ data, message, status = true, code = 200 }) {
         this.data = data;
         this.message = message;
         this.status = status;
+        this.code = code;
     }
     json(res) {
         res.json({
@@ -22,6 +23,6 @@ class ErrorResponse extends Error {
 }
 
 module.exports = {
-    SuccessfullyReponse,
+    SuccessfullyResponse,
     ErrorResponse,
 };

@@ -1,5 +1,5 @@
 const AccountService = require("../services/Account.service");
-const { SuccessfullyReponse } = require("../core/reponseHandle");
+const { SuccessfullyResponse } = require("../core/responseHandle");
 
 class AccountController {
   async register(req, res, next) {
@@ -11,7 +11,7 @@ class AccountController {
       phone,
       password,
     });
-    return new SuccessfullyReponse({
+    return new SuccessfullyResponse({
       message: "Register successfully",
       code: 201,
     }).json(res);
@@ -20,37 +20,33 @@ class AccountController {
   async login(req, res, next) {
     const { UserIF, password } = req.body;
     const user = await AccountService.login({ UserIF, password });
-    return new SuccessfullyReponse({
+    return new SuccessfullyResponse({
       data: user,
       message: "Login successfully",
-      code: 200,
     }).json(res);
   }
 
   async verifyEmail(req, res, next) {
     const { code, email } = req.body;
     await AccountService.verifyEmail({ code, email });
-    return new SuccessfullyReponse({
+    return new SuccessfullyResponse({
       message: "Verify successfully",
-      code: 200,
     }).json(res);
   }
 
   async sendVerifyEmail(req, res, next) {
     const { email } = req.body;
     await AccountService.sendVerifyEmail(email);
-    return new SuccessfullyReponse({
+    return new SuccessfullyResponse({
       message: "Send verify email successfully",
-      code: 200,
     }).json(res);
   }
 
   async resetPassword(req, res, next) {
     const { newPassword, email } = req.body;
     await AccountService.resetPassword({ newPassword, email });
-    return new SuccessfullyReponse({
+    return new SuccessfullyResponse({
       message: "Reset password successfully",
-      code: 200,
     }).json(res);
   }
 
@@ -62,37 +58,33 @@ class AccountController {
       newPassword,
       userId,
     });
-    return new SuccessfullyReponse({
+    return new SuccessfullyResponse({
       message: "Change password successfully",
-      code: 200,
     }).json(res);
   }
 
   async sendCodeResetPassword(req, res, next) {
     const { email } = req.body;
     await AccountService.sendCodeResetPassword(email);
-    return new SuccessfullyReponse({
+    return new SuccessfullyResponse({
       message: "Send code reset password successfully",
-      code: 200,
     }).json(res);
   }
 
   async verifyCodeResetPassword(req, res, next) {
     const { code, email } = req.body;
     await AccountService.verifyCodeResetPassword({ code, email });
-    return new SuccessfullyReponse({
+    return new SuccessfullyResponse({
       message: "Verify code reset password successfully",
-      code: 200,
     }).json(res);
   }
 
   async renewTokens(req, res, next) {
     const { refreshToken } = req.body;
     const token = await AccountService.renewTokens(refreshToken);
-    return new SuccessfullyReponse({
+    return new SuccessfullyResponse({
       data: { token },
       message: "Renew token successfully",
-      code: 200,
     }).json(res);
   }
 
@@ -100,9 +92,8 @@ class AccountController {
     const { userId } = req.user;
 
     await AccountService.logout(userId);
-    new SuccessfullyReponse({
+    new SuccessfullyResponse({
       message: "Logout successfully",
-      code: 200,
     }).json(res);
   }
 }

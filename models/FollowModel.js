@@ -13,15 +13,11 @@ const FollowSchema = new Schema(
       required: true,
     },
   },
-  {
-    _id: false,
-  }
+  {}
 );
 
 FollowSchema.index({ follower: 1, following: 1 }, { unique: true });
 
 const Follow = model("Follow", FollowSchema);
 
-
 module.exports = Follow;
-

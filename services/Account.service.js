@@ -1,5 +1,5 @@
-const { Account, KeyStore} = require("../models");
-const { ErrorResponse } = require("../core/reponseHandle");
+const { Account, KeyStore } = require("../models");
+const { ErrorResponse } = require("../core/responseHandle");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { sendMail, MapCode, GetVerifyCode } = require("../mail");
@@ -75,11 +75,9 @@ class AccountService {
       });
 
     // create token
-    const payload = {
-      userId: user._id,
-    };
+ 
 
-    const tokens = generateTokens(payload);
+    const tokens = generateTokens({_id: user._id});
 
     await keystoreService.upsertKeyStore({
       userId: user._id,

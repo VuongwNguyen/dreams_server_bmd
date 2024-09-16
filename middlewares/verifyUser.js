@@ -1,4 +1,4 @@
-const { ErrorResponse } = require("../core/reponseHandle");
+const { ErrorResponse } = require("../core/responseHandle");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 

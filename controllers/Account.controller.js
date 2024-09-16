@@ -56,7 +56,7 @@ class AccountController {
 
   async changePassword(req, res, next) {
     const { oldPassword, newPassword } = req.body;
-    const userId = req.user.id;
+    const userId = req.user.userId;
     await AccountService.changePassword({
       oldPassword,
       newPassword,

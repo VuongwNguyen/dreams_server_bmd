@@ -1,14 +1,14 @@
 var createError = require("http-errors");
-var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
-var app = express();
 var cors = require("cors");
 var helmet = require("helmet");
-
+const { app, firebase } = require("./socket");
+const express = require("express");
 
 const database = require("./config/connectToDatabase");
+const { getMessaging } = require("firebase-admin/messaging");
 
 // app configuration
 app.use(helmet());
@@ -41,5 +41,3 @@ app.use(function (err, req, res, next) {
   });
   console.log(err.stack);
 });
-
-module.exports = app;

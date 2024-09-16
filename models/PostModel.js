@@ -6,6 +6,7 @@ const PostSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Post",
       required: false,
+      default: null,
     },
     account_id: {
       type: Schema.Types.ObjectId,
@@ -14,7 +15,7 @@ const PostSchema = new Schema(
     },
     content: {
       type: String,
-      required: true,
+      required: false,
     },
     privacy_status: {
       type: String,
@@ -22,6 +23,15 @@ const PostSchema = new Schema(
       required: true,
     },
     images: [
+      {
+        type: {
+          url: { type: String, required: true },
+          public_id: { type: String, required: true },
+        },
+        required: false,
+      },
+    ],
+    videos: [
       {
         type: {
           url: { type: String, required: true },
@@ -39,7 +49,7 @@ const PostSchema = new Schema(
     ],
     hashtags: [
       {
-        type: String,
+        type: Schema.Types.ObjectId,
         required: false,
         ref: "Hashtag",
       },

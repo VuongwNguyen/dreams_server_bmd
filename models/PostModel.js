@@ -8,6 +8,7 @@ const PostSchema = new Schema(
       required: false,
       default: null,
     },
+
     account_id: {
       type: Schema.Types.ObjectId,
       ref: "Account",
@@ -54,6 +55,14 @@ const PostSchema = new Schema(
         ref: "Hashtag",
       },
     ],
+    view_count: {
+      type: Number,
+      default: 0,
+    },
+    like: {
+      type: [{ type: Schema.Types.ObjectId, ref: "Account" }],
+      default: [],
+    },
   },
   {
     timestamps: true,

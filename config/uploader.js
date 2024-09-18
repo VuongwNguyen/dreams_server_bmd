@@ -10,7 +10,7 @@ const uploader = multer({
       ext !== ".mkv" &&
       ext !== ".jpeg" &&
       ext !== ".png" &&
-      ext !== "jpg"
+      ext !== ".jpg"
     ) {
       cb(new Error("File type is not supported"));
       return;

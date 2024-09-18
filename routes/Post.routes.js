@@ -18,4 +18,8 @@ router.post(
   Upload.deleteResources
 );
 
+router.get("/trending-posts/:_page/:_limit", verifyUser, asyncHandler(PostController.getTrendingPosts));
+router.post("/set-post-viewed", verifyUser, asyncHandler(PostController.setPostViewed));
+router.post("/count-view-post", verifyUser, asyncHandler(PostController.countViewPost));
+
 module.exports = router;

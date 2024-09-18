@@ -1,9 +1,9 @@
 const { KeyStore } = require("../models");
 
 class KeyStoreService {
-  async upsertKeyStore({ userId, refreshToken }) {
+  async upsertKeyStore({ user_id, refreshToken }) {
     const filter = {
-      user_id: userId,
+      user_id, 
     };
     const update = {
       current_refresh_token: refreshToken,

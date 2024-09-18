@@ -53,7 +53,7 @@ class FollowService {
   async getFollowings({ userId, _page = 1, _limit = 10 }) {
     const user = await User.findOne({ _id: userId }).lean();
 
-    if (_page < 1) _page = 1;
+    if (_page < 1) _page = 1; // 
     if (_limit < 10) _limit = 10;
 
     if (!user) {

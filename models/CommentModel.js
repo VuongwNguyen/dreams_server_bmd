@@ -28,6 +28,15 @@ const CommentSchema = new Schema(
     },
     visible: { type: Boolean, required: true, default: true },
     depth: { type: Number, default: 0 },
+    likes: {
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "Account",
+        },
+      ],
+      default: [],
+    },
   },
   {
     timestamps: true,

@@ -2,9 +2,6 @@ const { ErrorResponse } = require("../core/reponseHandle");
 const Post = require("../models/PostModel");
 const Comment = require("../models/CommentModel");
 const { default: mongoose } = require("mongoose");
-const { removeUndefinedValueInObject } = require("../utils");
-const { auth } = require("firebase-admin");
-
 class CommentService {
   async createComment({ post_id, user_id, reply_comment_id, content }) {
     if (!post_id || !content) {
@@ -50,19 +47,24 @@ class CommentService {
     return newComment;
   }
 
-  async getParentCommentByPostId({
-    post_id,
-    page = 1,
-    limit = 10,
-    orderBy,
-    order,
-  }) {
+  async getParentCommentByPostId({ post_id, page = 1, limit = 10 }) {
     if (!post_id) {
       throw new ErrorResponse({
         message: "field post_id is required",
         status: 400,
       });
     }
+
+    const total = await Comment.countDocuments({ post_id, visible: true });
+
+    const paginationStage = [
+      {
+        $skip: (+page - 1) * +limit,
+      },
+      {
+        $limit: +limit,
+      },
+    ];
 
     const comments = await Comment.aggregate([
       {
@@ -110,14 +112,29 @@ class CommentService {
             },
           },
           childCommentCount: { $size: "$reply" },
+          likes: { $size: "$likes" },
         },
       },
+      ...paginationStage,
     ]);
 
-    return comments;
+    return {
+      list: comments,
+      page: {
+        maxPage: Math.ceil(total / limit),
+        currentPage: +page,
+        limit: +limit,
+        hasNext: comments.length === limit,
+        hasPrevious: +page > 1,
+      },
+    };
   }
 
-  async getCommentsByParentCommentId({ root_comment_id, page, limit }) {
+  async getCommentsByParentCommentId({
+    root_comment_id,
+    page = 1,
+    limit = 10,
+  }) {
     if (!root_comment_id) {
       throw new ErrorResponse({
         message: "field comment_id is required",
@@ -133,6 +150,20 @@ class CommentService {
         status: 400,
       });
     }
+
+    const total = await Comment.countDocuments({
+      root_comment_id,
+      visible: true,
+    });
+
+    const paginationStage = [
+      {
+        $skip: (+page - 1) * +limit,
+      },
+      {
+        $limit: +limit,
+      },
+    ];
 
     const comments = await Comment.aggregate([
       {
@@ -189,6 +220,7 @@ class CommentService {
           ],
         },
       },
+      ...paginationStage,
       {
         $project: {
           _id: 1,
@@ -216,11 +248,170 @@ class CommentService {
             },
           },
           childCommentCount: { $size: "$childrens" },
+          likes: { $size: "$likes" },
         },
       },
     ]);
 
-    return comments;
+    return {
+      list: comments,
+      page: {
+        maxPage: Math.ceil(total / limit),
+        currentPage: +page,
+        limit: +limit,
+        hasNext: comments.length === limit,
+        hasPrevious: +page > 1,
+      },
+    };
+  }
+
+  async toggleLikeComment({ comment_id, user_id }) {
+    if (!comment_id) {
+      throw new ErrorResponse({
+        message: "field comment_id is required",
+        status: 400,
+      });
+    }
+
+    const comment = await Comment.findOne({ _id: comment_id });
+
+    if (!comment) {
+      throw new ErrorResponse({
+        message: "Comment not found",
+        status: 400,
+      });
+    }
+
+    const like = comment.likes.includes(user_id);
+
+    let updatedComment = null;
+    if (!like) {
+      updatedComment = await Comment.findOneAndUpdate(
+        { _id: comment_id },
+        {
+          $addToSet: { likes: user_id },
+        },
+        {
+          new: true,
+        }
+      ).populate("account_id", "first_name last_name");
+
+      console.log(updatedComment.likes);
+
+      return {
+        message: "Like comment successfully",
+        comment: {
+          id: updatedComment._id,
+          content: updatedComment.content,
+          createdAt: updatedComment.createdAt,
+          likes: updatedComment.likes?.length || 0,
+          author: {
+            _id: updatedComment.account_id._id,
+            fullname: `${updatedComment.account_id.first_name} ${updatedComment.account_id.last_name}`,
+          },
+        },
+      };
+    }
+
+    updatedComment = await Comment.findOneAndUpdate(
+      {
+        _id: comment_id,
+      },
+      {
+        $pull: { likes: user_id },
+      },
+      {
+        new: true,
+      }
+    ).populate("account_id", "first_name last_name");
+
+    console.log(updatedComment.likes);
+
+    return {
+      message: "Unlike comment successfully",
+      comment: {
+        id: updatedComment._id,
+        content: updatedComment.content,
+        createdAt: updatedComment.createdAt,
+        likes: updatedComment.likes?.length || 0,
+        author: {
+          _id: updatedComment.account_id._id,
+          fullname: `${updatedComment.account_id.first_name} ${updatedComment.account_id.last_name}`,
+        },
+      },
+    };
+  }
+
+  async updateComment({ comment_id, user_id, content }) {
+    if (!comment_id || !content) {
+      throw new ErrorResponse({
+        message: "field comment_id and content are required",
+        status: 400,
+      });
+    }
+
+    const comment = await Comment.findOne({
+      _id: comment_id,
+      account_id: user_id,
+    });
+
+    if (!comment) {
+      throw new ErrorResponse({
+        message: "Comment not found",
+        status: 400,
+      });
+    }
+
+    const updatedComment = await Comment.findOneAndUpdate(
+      { _id: comment_id },
+      {
+        $set: { content },
+      },
+      {
+        new: true,
+      }
+    ).populate("account_id", "first_name last_name");
+
+    return {
+      _id: updatedComment._id,
+      content: updatedComment.content,
+      createdAt: updatedComment.createdAt,
+      author: {
+        _id: updatedComment.account_id._id,
+        fullname: `${updatedComment.account_id.first_name} ${updatedComment.account_id.last_name}`,
+      },
+      likes: updatedComment.likes.length,
+    };
+  }
+
+  async deleteComment({ comment_id, user_id }) {
+    if (!comment_id) {
+      throw new ErrorResponse({
+        message: "field comment_id is required",
+        status: 400,
+      });
+    }
+
+    const comment = await Comment.findOne({
+      _id: comment_id,
+    });
+
+    if (!comment) {
+      throw new ErrorResponse({
+        message: "Comment not found",
+        status: 400,
+      });
+    }
+
+    await Comment.updateOne(
+      {
+        _id: comment_id,
+        account_id: user_id,
+      },
+      {
+        visible: false,
+      }
+    );
   }
 }
 

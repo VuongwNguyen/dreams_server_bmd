@@ -19,7 +19,7 @@ class CommentController {
   }
 
   async getParentCommentByPostId(req, res, next) {
-    const { post_id, page = 0, limit = 10, orderBy, order } = req.query;
+    const { post_id, page = 0, limit = 10 } = req.query;
 
     new SuccessfullyReponse({
       message: "Get root comments by post id successfully",
@@ -28,14 +28,12 @@ class CommentController {
         post_id,
         page,
         limit,
-        orderBy,
-        order,
       }),
     }).json(res);
   }
 
   async getCommentsByParentCommentId(req, res, next) {
-    const { comment_id, page, limit, orderBy, order } = req.query;
+    const { comment_id, page, limit } = req.query;
 
     new SuccessfullyReponse({
       message: "Get comments by parent comment id successfully",
@@ -44,10 +42,53 @@ class CommentController {
         root_comment_id: comment_id,
         page,
         limit,
-        orderBy,
-        order,
       }),
     }).json(res);
+  }
+
+  async toggleLikeComment(req, res, next) {
+    const { comment_id } = req.body;
+    const user_id = req.user.userId;
+
+    const data = await CommentService.toggleLikeComment({
+      comment_id,
+      user_id,
+    });
+
+    new SuccessfullyReponse({
+      message: data.message,
+      code: 200,
+      data: data.comment,
+    }).json(res);
+  }
+
+  async updateComment(req, res, next) {
+    const { comment_id, content } = req.body;
+    const user_id = req.user.userId;
+
+    new SuccessfullyReponse({
+      message: "Comment updated successfully",
+      code: 200,
+      data: await CommentService.updateComment({
+        comment_id,
+        user_id,
+        content,
+      }),
+    }).json(res);
+  }
+
+  async deleteComment(req, res, next) {
+    const { comment_id } = req.params;
+    const user_id = req.user.userId;
+
+    await CommentService.deleteComment({
+      comment_id,
+      user_id,
+    }),
+      new SuccessfullyReponse({
+        message: "Comment deleted successfully",
+        code: 200,
+      }).json(res);
   }
 }
 

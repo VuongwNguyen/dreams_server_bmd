@@ -54,6 +54,7 @@ const PostSchema = new Schema(
         ref: "Hashtag",
       },
     ],
+    visible: { type: Boolean, default: true },
   },
   {
     timestamps: true,

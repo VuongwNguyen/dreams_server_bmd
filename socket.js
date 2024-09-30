@@ -2,6 +2,10 @@ var express = require("express");
 var app = express();
 var admin = require("firebase-admin");
 
+// const { Queue } = require("bullmq");
+
+// const notificationQueue = new Queue("notifications");
+
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
 });

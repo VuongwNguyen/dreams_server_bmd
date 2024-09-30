@@ -12,7 +12,12 @@ const CommentSchema = new Schema(
       ref: "Account",
       required: true,
     },
-    parent_comment_id: {
+    reply_comment_id: {
+      type: Schema.Types.ObjectId,
+      ref: "Comment",
+      required: false,
+    },
+    root_comment_id: {
       type: Schema.Types.ObjectId,
       ref: "Comment",
       required: false,
@@ -20,6 +25,17 @@ const CommentSchema = new Schema(
     content: {
       type: String,
       required: true,
+    },
+    visible: { type: Boolean, required: true, default: true },
+    depth: { type: Number, default: 0 },
+    likes: {
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "Account",
+        },
+      ],
+      default: [],
     },
   },
   {

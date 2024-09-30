@@ -8,7 +8,10 @@ const PostSchema = new Schema(
       required: false,
       default: null,
     },
-
+    title: {
+      type: String,
+      required: false,
+    },
     account_id: {
       type: Schema.Types.ObjectId,
       ref: "Account",

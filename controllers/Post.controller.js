@@ -3,7 +3,8 @@ const PostService = require("../services/Post.service");
 
 class PostController {
   async createPost(req, res) {
-    const { content, parent_id, privacy_status, tagUsers, hashtags } = req.body;
+    const { content, parent_id, privacy_status, tagUsers, hashtags, title } =
+      req.body;
     const user_id = req.user.user_id;
     const videos = req.videos;
     const images = req.images;
@@ -16,6 +17,7 @@ class PostController {
       hashtags,
       videos,
       images,
+      title,
     });
 
     return new SuccessfullyReponse({
@@ -28,6 +30,21 @@ class PostController {
     const { _page, _limit } = req.params;
     const user_id = req.user.user_id;
     const post = await PostService.getTrendingPosts({ user_id, _page, _limit });
+
+    return new SuccessfullyReponse({
+      data: post,
+      message: "Get post successfully",
+    }).json(res);
+  }
+
+  async getFollowingPosts(req, res) {
+    const { _page, _limit } = req.params;
+    const user_id = req.user.user_id;
+    const post = await PostService.getFollowingPosts({
+      user_id,
+      _page,
+      _limit,
+    });
 
     return new SuccessfullyReponse({
       data: post,
@@ -63,6 +80,8 @@ class PostController {
       message: "Like post successfully",
     }).json(res);
   }
+
+
 }
 
 module.exports = new PostController();

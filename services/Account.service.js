@@ -237,9 +237,9 @@ class AccountService {
     try {
       const decode = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
-      const user = await Account.findOne({ _id: decode.userId }).lean();
+      const user = await Account.findOne({ _id: decode.user_id }).lean();
 
-      const keyStore = await KeyStore.findOne({ userId: user._id });
+      const keyStore = await KeyStore.findOne({ user_id: user._id });
 
       if (
         !keyStore ||

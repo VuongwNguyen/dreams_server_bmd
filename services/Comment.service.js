@@ -226,6 +226,7 @@ class CommentService {
           _id: 1,
           content: 1,
           createdAt: 1,
+          visible: 1,
           author: {
             _id: "$author._id",
             fullname: {
@@ -236,6 +237,7 @@ class CommentService {
             _id: "$reply._id",
             content: "$reply.content",
             createdAt: "$reply.createdAt",
+            visible: "$reply.visible",
             author: {
               _id: "$reply.author._id",
               fullname: {

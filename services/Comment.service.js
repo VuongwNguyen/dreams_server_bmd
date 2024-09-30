@@ -47,7 +47,7 @@ class CommentService {
     return newComment;
   }
 
-  async getParentCommentByPostId({ post_id, page = 1, limit = 10 }) {
+  async getParentCommentByPostId({ post_id, page = 1, limit = 10, user_id }) {
     if (!post_id) {
       throw new ErrorResponse({
         message: "field post_id is required",
@@ -112,6 +112,9 @@ class CommentService {
             },
           },
           childCommentCount: { $size: "$reply" },
+          hasLike: {
+            $in: [new mongoose.Types.ObjectId(user_id), "$likes"],
+          },
           likes: { $size: "$likes" },
         },
       },
@@ -134,6 +137,7 @@ class CommentService {
     root_comment_id,
     page = 1,
     limit = 10,
+    user_id,
   }) {
     if (!root_comment_id) {
       throw new ErrorResponse({
@@ -227,6 +231,9 @@ class CommentService {
           content: 1,
           createdAt: 1,
           visible: 1,
+          // hasLike: {
+          //   $in: [new mongoose.Types.ObjectId(user_id), "$likes"],
+          // },
           author: {
             _id: "$author._id",
             fullname: {
@@ -287,6 +294,8 @@ class CommentService {
     const like = comment.likes.includes(user_id);
 
     let updatedComment = null;
+    let message = null;
+
     if (!like) {
       updatedComment = await Comment.findOneAndUpdate(
         { _id: comment_id },
@@ -298,39 +307,25 @@ class CommentService {
         }
       ).populate("account_id", "first_name last_name");
 
-      console.log(updatedComment.likes);
-
-      return {
-        message: "Like comment successfully",
-        comment: {
-          id: updatedComment._id,
-          content: updatedComment.content,
-          createdAt: updatedComment.createdAt,
-          likes: updatedComment.likes?.length || 0,
-          author: {
-            _id: updatedComment.account_id._id,
-            fullname: `${updatedComment.account_id.first_name} ${updatedComment.account_id.last_name}`,
-          },
+      message = "Like comment successfully";
+    } else {
+      updatedComment = await Comment.findOneAndUpdate(
+        {
+          _id: comment_id,
         },
-      };
+        {
+          $pull: { likes: user_id },
+        },
+        {
+          new: true,
+        }
+      ).populate("account_id", "first_name last_name");
+
+      message = "Unlike comment successfully";
     }
 
-    updatedComment = await Comment.findOneAndUpdate(
-      {
-        _id: comment_id,
-      },
-      {
-        $pull: { likes: user_id },
-      },
-      {
-        new: true,
-      }
-    ).populate("account_id", "first_name last_name");
-
-    console.log(updatedComment.likes);
-
     return {
-      message: "Unlike comment successfully",
+      message,
       comment: {
         id: updatedComment._id,
         content: updatedComment.content,

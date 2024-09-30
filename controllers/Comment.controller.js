@@ -20,6 +20,7 @@ class CommentController {
 
   async getParentCommentByPostId(req, res, next) {
     const { post_id, page = 0, limit = 10 } = req.query;
+    const user_id = req.user.userId;
 
     new SuccessfullyReponse({
       message: "Get root comments by post id successfully",
@@ -28,12 +29,14 @@ class CommentController {
         post_id,
         page,
         limit,
+        user_id,
       }),
     }).json(res);
   }
 
   async getCommentsByParentCommentId(req, res, next) {
     const { comment_id, page, limit } = req.query;
+    const user_id = req.user.userId;
 
     new SuccessfullyReponse({
       message: "Get comments by parent comment id successfully",
@@ -42,6 +45,7 @@ class CommentController {
         root_comment_id: comment_id,
         page,
         limit,
+        user_id,
       }),
     }).json(res);
   }

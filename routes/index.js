@@ -10,5 +10,6 @@ router.get("/", async (req, res) => {
 
 router.use("/account", require("./Account.routes"));
 router.use("/post", require("./Post.routes"));
+router.use("/comment", require("./Comment.routes"));
 
 module.exports = router;

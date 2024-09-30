@@ -1,4 +1,4 @@
-const { Account, Post, Hashtag, Follow,Comment } = require("../models");
+const { Account, Post, Hashtag, Follow, Comment } = require("../models");
 const { ErrorResponse } = require("../core/reponseHandle");
 
 class PostService {
@@ -340,7 +340,7 @@ class PostService {
       .select("-updatedAt -__v -view_count -images.public_id -videos.public_id")
       .populate(
         "account_id",
-        "-updatedAt -__v -password -fcm_token -isActivated -isVerified -role -infomation -post_viewed -email -phone"
+        "-updatedAt -__v -password -fcm_token -isActivated -isVerified -role -infomation -post_viewed -email -phone -createdAt"
       )
       .populate(
         "tagUsers",
@@ -359,14 +359,17 @@ class PostService {
     });
 
     post.likeCount = post.like.length;
+    post.account_id.fullname = `${post.account_id.first_name} ${post.account_id.last_name}`;
     post.isLiked = post.like.includes(user_id);
     delete post.like;
+    delete post.account_id.first_name;
+    delete post.account_id.last_name;
     post.followedStatus = followedStatus ? true : false;
 
     return post;
   }
 
-  async getPostByHastag({ user_id, hashtag, _page = 1, _limit = 10 }) {
+  async getPostByHashtag({ user_id, hashtag, _page = 1, _limit = 10 }) {
     if (_page < 1) _page = 1;
     if (_limit < 10) _limit = 10;
     const _skip = (_page - 1) * _limit;

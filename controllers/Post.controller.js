@@ -81,7 +81,66 @@ class PostController {
     }).json(res);
   }
 
+  async getPostByUser(req, res) {
+    const { user_id_view, _page, _limit } = req.params;
+    const user_id = req.user.user_id;
+    const post = await PostService.getPostByUser({
+      user_id,
+      user_id_view,
+      _page,
+      _limit,
+    });
 
+    return new SuccessfullyReponse({
+      data: post,
+      message: "Get post successfully",
+    }).json(res);
+  }
+
+  async getPostDetail(req, res) {
+    console.log("req", req);
+    const { post_id } = req.body;
+    const user_id = req.user.user_id;
+    const post = await PostService.getPostDetail({ user_id, post_id });
+
+    return new SuccessfullyReponse({
+      data: post,
+      message: "Get post successfully",
+    }).json(res);
+  }
+
+  async getPostByHashtag(req, res) {
+    const { hashtags, _page, _limit } = req.params;
+    const user_id = req.user.user_id;
+
+    const post = await PostService.getPostByHashtag({
+      user_id,
+      hashtags,
+      _page,
+      _limit,
+    });
+
+    return new SuccessfullyReponse({
+      data: post,
+      message: "Get post successfully",
+    }).json(res);
+  }
+
+  async getPostByTitleOrContent(req, res) {
+    const { keyword, _page, _limit } = req.params;
+    const user_id = req.user.user_id;
+    const post = await PostService.getPostByTitleOrContent({
+      user_id,
+      keyword,
+      _page,
+      _limit,
+    });
+
+    return new SuccessfullyReponse({
+      data: post,
+      message: "Get post successfully",
+    }).json(res);
+  }
 }
 
 module.exports = new PostController();

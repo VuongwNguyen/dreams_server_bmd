@@ -17,7 +17,6 @@ router.post(
   asyncHandler(PostController.createPost),
   Upload.deleteResources
 );
-
 router.get(
   "/trending-posts/:_page/:_limit",
   verifyUser,
@@ -44,5 +43,18 @@ router.get(
   verifyUser,
   asyncHandler(PostController.getPost)
 );
-
+router.get(
+  "/get-post-by-user/:user_id_view/:_page/:_limit",
+  verifyUser,
+  asyncHandler(PostController.getPostByUser)
+);
+router.post(
+  "/get-post-detail",
+  verifyUser,
+  asyncHandler(PostController.getPostDetail)
+);
+router.get(
+  "/get-post-by-hashtag/:hashtag",
+  asyncHandler(PostController.getPostByHashtag)
+);
 module.exports = router;

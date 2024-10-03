@@ -98,8 +98,8 @@ class PostController {
   }
 
   async getPostDetail(req, res) {
-    console.log("req", req);
-    const { post_id } = req.body;
+    const { post_id } = req.query;
+    console.log(post_id);
     const user_id = req.user.user_id;
     const post = await PostService.getPostDetail({ user_id, post_id });
 

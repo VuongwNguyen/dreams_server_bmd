@@ -48,7 +48,7 @@ router.get(
   verifyUser,
   asyncHandler(PostController.getPostByUser)
 );
-router.post(
+router.get(
   "/get-post-detail",
   verifyUser,
   asyncHandler(PostController.getPostDetail)

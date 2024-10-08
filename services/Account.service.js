@@ -8,9 +8,10 @@ const keystoreService = require("./keystore.service");
 
 const salt = bcrypt.genSaltSync(10);
 const code = Math.floor(1000 + Math.random() * 9000).toString();
-const forgotPassword = new MapCode();
-const verifyCode = new MapCode();
-
+// const forgotPassword = new MapCode();
+// const verifyCode = new MapCode();
+const verify = new MapCode();
+const verifyObj = { verify: true };
 class AccountService {
   async register(data) {
     const { first_name, last_name, email, phone, password } = data;
@@ -89,7 +90,7 @@ class AccountService {
     return tokens;
   }
 
-  async sendVerifyEmail(email) {
+  async sendVerifyCode(email) {
     const user = await Account.findOne({ email: email });
     if (!user)
       throw new ErrorResponse({
@@ -97,9 +98,7 @@ class AccountService {
         code: 400,
       });
 
-    // create verify code
-    // store code in redis and send mail
-    verifyCode.set(user._id.toString(), code);
+    verify.set(user._id.toString(), code);
     sendMail(GetVerifyCode(code, email));
     return true;
   }
@@ -113,15 +112,15 @@ class AccountService {
         code: 400,
       });
 
-    if (!verifyCode.equals(user._id.toString(), code)) {
+    if (!verify.equals(user._id.toString(), code))
       // nếu code không đúng thì thông báo lỗi
       throw new ErrorResponse({
         message: "Code is incorrect",
         code: 400,
       });
-    }
+
     user.isVerified = true;
-    verifyCode.delete(user._id.toString());
+    // verify.delete(user._id.toString());
     await user.save();
     return true;
   }
@@ -157,78 +156,46 @@ class AccountService {
       });
     }
 
-    if (forgotPassword.get(user._id.toString())?.expiresIn < Date.now()) {
+    if (!newPassword)
       throw new ErrorResponse({
-        message: "Request reset password is expired",
+        message: "New password is required",
         code: 400,
       });
-    }
-    if (!forgotPassword?.get(user._id.toString())?.value?.verify) {
-      console.log(forgotPassword.get(user._id.toString()));
-      throw new ErrorResponse({
-        message: "Request reset password is not verified",
-        code: 400,
-      });
-    }
 
-    user.password = bcrypt.hashSync(newPassword, salt);
-    forgotPassword.delete(user._id.toString());
-    await user.save();
-    return true;
-  }
-
-  async sendCodeResetPassword(email) {
-    const user = await Account.findOne({ email });
-
-    if (!user) {
-      throw new ErrorResponse({
-        message: "User not found",
-        code: 400,
-      });
-    }
-
-    forgotPassword.set(user._id.toString(), code);
-
-    sendMail(GetVerifyCode(code, email));
-
-    return true;
-  }
-
-  async verifyCodeResetPassword({ code, email }) {
-    if (!code) {
-      throw new ErrorResponse({
-        message: "Code is required",
-        code: 400,
-      });
-    }
-
-    const user = await Account.findOne({ email });
-
-    if (!user) {
-      throw new ErrorResponse({
-        message: "User not found",
-        code: 400,
-      });
-    }
-
-    const forgotPasswordData = forgotPassword.get(user._id.toString());
-
-    if (forgotPasswordData.expiresIn < Date.now()) {
-      throw new ErrorResponse({
-        message: "Code expired",
-        code: 400,
-      });
-    }
-
-    if (forgotPasswordData.value !== code) {
+    if (!verify.equals(user._id.toString(), verifyObj))
       throw new ErrorResponse({
         message: "Code is incorrect",
         code: 400,
       });
-    }
 
-    forgotPassword.delete(user._id.toString());
-    forgotPassword.set(user._id.toString(), { verify: true });
+    user.password = bcrypt.hashSync(newPassword, salt);
+    // verify.delete(user._id.toString());
+    await user.save();
+    return true;
+  }
+
+  async verifyCodeResetPassword({ code, email }) {
+    if (!code)
+      throw new ErrorResponse({
+        message: "Code is required",
+        code: 400,
+      });
+
+    if (!email)
+      throw new ErrorResponse({
+        message: "Email is required",
+        code: 400,
+      });
+
+    const user = await Account.findOne({ email });
+
+    if (!verify.equals(user._id.toString(), code))
+      throw new ErrorResponse({
+        message: "Code is incorrect",
+        code: 400,
+      });
+
+    verify.set(user._id.toString(), verifyObj);
 
     return true;
   }

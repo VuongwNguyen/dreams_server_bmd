@@ -1,4 +1,4 @@
-const { Account, KeyStore} = require("../models");
+const { Account, KeyStore } = require("../models");
 const { ErrorResponse } = require("../core/reponseHandle");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -76,13 +76,13 @@ class AccountService {
 
     // create token
     const payload = {
-      userId: user._id,
+      user_id: user._id,
     };
 
     const tokens = generateTokens(payload);
 
     await keystoreService.upsertKeyStore({
-      userId: user._id,
+      user_id: user._id,
       refreshToken: tokens.refreshToken,
     });
 
@@ -237,9 +237,9 @@ class AccountService {
     try {
       const decode = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
-      const user = await Account.findOne({ _id: decode.userId }).lean();
+      const user = await Account.findOne({ _id: decode.user_id }).lean();
 
-      const keyStore = await KeyStore.findOne({ userId: user._id });
+      const keyStore = await KeyStore.findOne({ user_id: user._id });
 
       if (
         !keyStore ||

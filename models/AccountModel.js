@@ -49,6 +49,13 @@ const AccountSchema = new Schema(
       },
       required: false,
     },
+    post_viewed: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Post",
+        required: false,
+      },
+    ],
     infomation: [
       {
         type: {

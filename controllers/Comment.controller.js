@@ -4,7 +4,7 @@ const CommentService = require("../services/Comment.service");
 class CommentController {
   async createComment(req, res, next) {
     const { post_id, content, reply_comment_id = null } = req.body;
-    const user_id = req.user.userId;
+    const user_id = req.user.user_id;
 
     new SuccessfullyReponse({
       message: "Comment created successfully",
@@ -20,7 +20,7 @@ class CommentController {
 
   async getParentCommentByPostId(req, res, next) {
     const { post_id, page = 0, limit = 10 } = req.query;
-    const user_id = req.user.userId;
+    const user_id = req.user.user_id;
 
     new SuccessfullyReponse({
       message: "Get root comments by post id successfully",
@@ -36,7 +36,7 @@ class CommentController {
 
   async getCommentsByParentCommentId(req, res, next) {
     const { comment_id, page, limit } = req.query;
-    const user_id = req.user.userId;
+    const user_id = req.user.user_id;
 
     new SuccessfullyReponse({
       message: "Get comments by parent comment id successfully",
@@ -52,7 +52,7 @@ class CommentController {
 
   async toggleLikeComment(req, res, next) {
     const { comment_id } = req.body;
-    const user_id = req.user.userId;
+    const user_id = req.user.user_id;
 
     const data = await CommentService.toggleLikeComment({
       comment_id,
@@ -68,7 +68,7 @@ class CommentController {
 
   async updateComment(req, res, next) {
     const { comment_id, content } = req.body;
-    const user_id = req.user.userId;
+    const user_id = req.user.user_id;
 
     new SuccessfullyReponse({
       message: "Comment updated successfully",
@@ -83,7 +83,7 @@ class CommentController {
 
   async deleteComment(req, res, next) {
     const { comment_id } = req.params;
-    const user_id = req.user.userId;
+    const user_id = req.user.user_id;
 
     await CommentService.deleteComment({
       comment_id,

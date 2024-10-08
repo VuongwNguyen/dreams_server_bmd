@@ -112,7 +112,7 @@ class CommentService {
             },
           },
           childCommentCount: { $size: "$reply" },
-          hasLike: {
+          isLike: {
             $in: [new mongoose.Types.ObjectId(user_id), "$likes"],
           },
           likes: { $size: "$likes" },

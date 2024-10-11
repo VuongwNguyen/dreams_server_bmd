@@ -161,7 +161,7 @@ class PostService {
       {
         $match: {
           privacy_status: "public",
-          _id: { $nin: user.post_viewed },
+          // _id: { $nin: user.post_viewed },
         },
       },
       {
@@ -271,6 +271,15 @@ class PostService {
           author: {
             _id: 1,
             fullname: 1,
+            avatar: {
+              url: {
+                $ifNull: [
+                  "$author.avatar.url",
+                  "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
+                ],
+              },
+              public_id: 1,
+            },
           },
           title: 1,
           content: 1,
@@ -340,7 +349,7 @@ class PostService {
         $match: {
           privacy_status: "public",
           account_id: { $in: followingIds },
-          _id: { $nin: user.post_viewed },
+          // _id: { $nin: user.post_viewed },
         },
       },
       {
@@ -413,6 +422,12 @@ class PostService {
           likeCount: { $size: "$like" },
           isLiked: { $in: [user_id, "$like"] }, // Kiểm tra người dùng đã like chưa
           commentCount: { $size: "$comments" },
+          author: {
+            _id: "$author._id",
+            fullname: {
+              $concat: ["$author.first_name", " ", "$author.last_name"],
+            },
+          },
           tagUsers: {
             $map: {
               input: "$tagUsers",
@@ -440,6 +455,15 @@ class PostService {
           author: {
             _id: 1,
             fullname: 1,
+          },
+          avatar: {
+            url: {
+              $ifNull: [
+                "$avatar.url",
+                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
+              ],
+            },
+            public_id: 1,
           },
           title: 1,
           content: 1,
@@ -806,7 +830,7 @@ class PostService {
               then: true,
               else: false,
             },
-          }, 
+          },
         },
       },
       {
@@ -836,6 +860,14 @@ class PostService {
             _id: 1,
             fullname: {
               $concat: ["$author.first_name", " ", "$author.last_name"],
+            },
+            avatar: {
+              url: {
+                $ifNull: [
+                  "$author.avatar.url",
+                  "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
+                ],
+              },
             },
           },
           likeCount: 1,

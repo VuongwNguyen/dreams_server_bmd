@@ -8,8 +8,6 @@ const keystoreService = require("./keystore.service");
 
 const salt = bcrypt.genSaltSync(10);
 const code = Math.floor(1000 + Math.random() * 9000).toString();
-// const forgotPassword = new MapCode();
-// const verifyCode = new MapCode();
 const verify = new MapCode();
 const verifyObj = { verify: true };
 class AccountService {
@@ -39,6 +37,9 @@ class AccountService {
 
     // create new user
     const newUser = await Account.create(data);
+
+    verify.set(newUser._id.toString(), code);
+    sendMail(GetVerifyCode(code, email));
     return newUser;
   }
 
@@ -120,7 +121,7 @@ class AccountService {
       });
 
     user.isVerified = true;
-    // verify.delete(user._id.toString());
+    verify.delete(user._id.toString());
     await user.save();
     return true;
   }
@@ -169,7 +170,7 @@ class AccountService {
       });
 
     user.password = bcrypt.hashSync(newPassword, salt);
-    // verify.delete(user._id.toString());
+    verify.delete(user._id.toString());
     await user.save();
     return true;
   }
@@ -227,13 +228,13 @@ class AccountService {
       }
 
       const payload = {
-        userId: user._id,
+        user_id: user._id,
       };
 
       const tokens = generateTokens(payload);
 
       await keystoreService.addRefreshTokenIntoBlackList({
-        userId: user._id,
+        user_id: user._id,
         newRefreshToken: tokens.refreshToken,
         refreshToken: refreshToken,
       });

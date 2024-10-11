@@ -14,14 +14,9 @@ class MapCode {
   }
 
   equals(key, value) {
-    console.log(
-      this.map.get(key).value,
-      value,
-      this.map.get(key).value === value
-    );
     if (!this.map.has(key)) return false;
     if (this.map.get(key).expiresIn < Date.now()) return false;
-    return this.map.get(key).value === value;
+    return this.map.get(key)?.value === value;
   }
 
   delete(key) {

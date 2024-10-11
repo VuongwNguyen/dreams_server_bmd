@@ -110,6 +110,15 @@ class CommentService {
             fullname: {
               $concat: ["$author.first_name", " ", "$author.last_name"],
             },
+            avatar: {
+              url: {
+                $ifNull: [
+                  "$avatar.url",
+                  "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
+                ],
+              },
+              public_id: 1,
+            },
           },
           childCommentCount: { $size: "$reply" },
           isLike: {
@@ -239,6 +248,15 @@ class CommentService {
             fullname: {
               $concat: ["$author.first_name", " ", "$author.last_name"],
             },
+            avatar: {
+              url: {
+                $ifNull: [
+                  "$avatar.url",
+                  "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
+                ],
+              },
+              public_id: 1,
+            },
           },
           reply: {
             _id: "$reply._id",
@@ -334,6 +352,15 @@ class CommentService {
         author: {
           _id: updatedComment.account_id._id,
           fullname: `${updatedComment.account_id.first_name} ${updatedComment.account_id.last_name}`,
+          avatar: {
+            url: {
+              $ifNull: [
+                "$avatar.url",
+                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
+              ],
+            },
+            public_id: 1,
+          },
         },
       },
     };
@@ -376,6 +403,15 @@ class CommentService {
       author: {
         _id: updatedComment.account_id._id,
         fullname: `${updatedComment.account_id.first_name} ${updatedComment.account_id.last_name}`,
+        avatar: {
+          url: {
+            $ifNull: [
+              "$avatar.url",
+              "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
+            ],
+          },
+          public_id: 1,
+        },
       },
       likes: updatedComment.likes.length,
     };

@@ -147,7 +147,7 @@ class PostService {
 
     const totalRecords = await Post.countDocuments({
       privacy_status: "public",
-      _id: { $nin: user.post_viewed }, // loại bỏ các bài đã xem
+      // _id: { $nin: user.post_viewed }, // loại bỏ các bài đã xem
     });
 
     if (!user) {
@@ -330,7 +330,7 @@ class PostService {
     const totalRecords = await Post.countDocuments({
       privacy_status: "public",
       account_id: { $in: user.following },
-      _id: { $nin: user.post_viewed },
+      // _id: { $nin: user.post_viewed },
     });
 
     if (!user) {
@@ -694,6 +694,15 @@ class PostService {
           content: 1,
           createdAt: 1,
           privacy_status: 1,
+          avatar: {
+            url: {
+              $ifNull: [
+                "$avatar.url",
+                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
+              ],
+            },
+            public_id: 1,
+          },
           images: {
             url: 1,
             _id: 1,

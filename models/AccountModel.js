@@ -59,11 +59,26 @@ const AccountSchema = new Schema(
     infomation: [
       {
         type: {
-          key: { type: String, required: true, enum: [] },
+          key: {
+            type: String,
+            required: true,
+            enum: [
+              "natl", // nationality
+              "htown", // hometown
+              "zone", // live in
+              "gender", // gender
+              "dob", // date of birth
+              "job", // job
+              "edu", // education
+              "hobby", // hobby
+              "rlts", // relationship
+              "zodiac", // zodiac
+              "des", // description
+            ],
+          },
           value: { type: String, required: true },
           privacy_status: {
             type: String,
-            required: true,
             default: "public",
             enum: ["public", "private"],
           },

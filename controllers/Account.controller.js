@@ -36,9 +36,9 @@ class AccountController {
     }).json(res);
   }
 
-  async sendVerifyEmail(req, res, next) {
+  async sendVerifyCode(req, res, next) {
     const { email } = req.body;
-    await AccountService.sendVerifyEmail(email);
+    await AccountService.sendVerifyCode(email);
     return new SuccessfullyReponse({
       message: "Send verify email successfully",
       code: 200,
@@ -64,15 +64,6 @@ class AccountController {
     });
     return new SuccessfullyReponse({
       message: "Change password successfully",
-      code: 200,
-    }).json(res);
-  }
-
-  async sendCodeResetPassword(req, res, next) {
-    const { email } = req.body;
-    await AccountService.sendCodeResetPassword(email);
-    return new SuccessfullyReponse({
-      message: "Send code reset password successfully",
       code: 200,
     }).json(res);
   }

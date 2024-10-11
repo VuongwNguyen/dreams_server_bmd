@@ -3,10 +3,9 @@ class MapCode {
     this.map = new Map();
   }
 
-
   set(key, value) {
     console.log(key, value);
-    const date = Date.now() + 5 * 60 * 1000;
+    const date = Date.now() + 10 * 60 * 1000; 
     this.map.set(key, { value, expiresIn: date });
   }
 
@@ -17,7 +16,7 @@ class MapCode {
   equals(key, value) {
     if (!this.map.has(key)) return false;
     if (this.map.get(key).expiresIn < Date.now()) return false;
-    return this.map.get(key).value === value;
+    return this.map.get(key)?.value === value;
   }
 
   delete(key) {

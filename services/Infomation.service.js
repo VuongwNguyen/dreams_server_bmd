@@ -18,7 +18,6 @@ const keyPartern = [
 const privacyStatus = ["public", "private"];
 class InfomationService {
   async upSertInfomation({ user_id, payload }) {
-    console.log(user_id);
     const { key, value, privacy_status = "public" } = payload;
     const user = await Account.findOne({ _id: user_id }).select("infomation");
     if (!user)
@@ -160,3 +159,8 @@ class InfomationService {
 }
 
 module.exports = new InfomationService();
+ /*
+  1/ avt, tên, nickname, số ng theo dõi, số ng đang theo dõi, mô tả, số post của user_id_view
+
+  2/ thông tin cá nhân của user_id_view 
+ */

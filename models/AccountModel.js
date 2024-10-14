@@ -74,6 +74,7 @@ const AccountSchema = new Schema(
               "rlts", // relationship
               "zodiac", // zodiac
               "des", // description
+              "nick" // nickname
             ],
           },
           value: { type: String, required: true },

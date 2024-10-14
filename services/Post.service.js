@@ -845,6 +845,19 @@ class PostService {
       {
         $project: {
           _id: 1,
+          author: {
+            _id: 1,
+            fullname: 1,
+            avatar: {
+              url: {
+                $ifNull: [
+                  "$author.avatar.url",
+                  "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
+                ],
+              },
+              public_id: 1,
+            },
+          },
           title: 1,
           content: 1,
           createdAt: 1,
@@ -864,21 +877,6 @@ class PostService {
           hashtags: {
             _id: 1,
             title: 1,
-          },
-          author: {
-            _id: 1,
-            fullname: {
-              $concat: ["$author.first_name", " ", "$author.last_name"],
-            },
-            avatar: {
-              url: {
-                $ifNull: [
-                  "$author.avatar.url",
-                  "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-                ],
-                public_id: 1,
-              },
-            },
           },
           likeCount: 1,
           isLiked: 1,

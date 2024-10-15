@@ -15,13 +15,7 @@ router.post(
 //   asyncHandler(InfomationController.getInfomation)
 // );
 router.get(
-  "/me",
-  verifyUser,
-  asyncHandler(InfomationController.getMe)
-)
-
-router.get(
-  "/:id",
+  "/",
   verifyUser,
   asyncHandler(InfomationController.getInfomation)
 );

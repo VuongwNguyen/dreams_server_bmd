@@ -146,8 +146,24 @@ class InfomationService {
   // }
 
   async getInfomation(id, userViewId) {
-    const pipeline = [
-      { $match: { _id: new mongoose.Types.ObjectId(id) } },
+    let pipeline = [
+      { $match: { _id: new mongoose.Types.ObjectId(id || userViewId) } },
+      {
+        $addFields: {
+          description: {
+            $arrayElemAt: [
+              {
+                $filter: {
+                  input: "$infomation",
+                  as: "info",
+                  cond: { $eq: ["$$info.key", "des"] } // Lọc các phần tử có key là "des"
+                }
+              },
+              0 // Lấy phần tử đầu tiên trong mảng đã lọc
+            ]
+          }
+        }
+      },
       //follows
       {
         $lookup: {
@@ -158,10 +174,10 @@ class InfomationService {
               $match: {
                 $or: [
                   {
-                    follower: new mongoose.Types.ObjectId(id),
+                    follower: new mongoose.Types.ObjectId(id || userViewId),
                   },
                   {
-                    following: new mongoose.Types.ObjectId(id),
+                    following: new mongoose.Types.ObjectId(id || userViewId),
                   },
                 ],
               },
@@ -177,7 +193,7 @@ class InfomationService {
               $filter: {
                 input: "$follows",
                 as: "follow",
-                cond: { $eq: ["$$follow.following", new mongoose.Types.ObjectId(id)] }
+                cond: { $eq: ["$$follow.following", new mongoose.Types.ObjectId(userViewId)] }
               }
             }
           },
@@ -186,7 +202,7 @@ class InfomationService {
               $filter: {
                 input: "$follows",
                 as: "follow",
-                cond: { $eq: ["$$follow.follower", new mongoose.Types.ObjectId(id)] }
+                cond: { $eq: ["$$follow.follower", new mongoose.Types.ObjectId(userViewId)] }
               }
             }
           }
@@ -197,7 +213,7 @@ class InfomationService {
         $lookup: {
           from: "posts",
           let: { user_id: "$_id" },
-          pipeline: [{ $match: { account_id: new mongoose.Types.ObjectId(id) } }],
+          pipeline: [{ $match: { account_id: new mongoose.Types.ObjectId(id || userViewId) } }],
           as: "posts",
         },
       },
@@ -210,11 +226,11 @@ class InfomationService {
       {
         $project: {
           _id: 1,
-          full_name: { $concat: ["$last_name", " ", "$first_name"] },
+          fullname: { $concat: ["$last_name", " ", "$first_name"] },
           email: 1,
           phone: 1,
           avatar: 1,
-          infomation: !userViewId
+          infomation: !id
             ? 1
             : {
                 $filter: {
@@ -228,10 +244,12 @@ class InfomationService {
           followerCount: 1,
           follows: 1,
           postCount: 1,
+          nickname: { $cond: { if: { $ne: [id, null] }, then: 1, else: "$$REMOVE" } },
+          description: { $cond: { if: { $ne: [id, null] }, then: "$description.value", else: "$$REMOVE" } }
         },
       },
     ];
-    const result = await Account.aggregate(pipeline);
+    const result = await Account.aggregate(pipeline);    
     if (result.length === 0) {
       throw new ErrorResponse({
         message: "User not found",
@@ -241,11 +259,11 @@ class InfomationService {
     const {follows,...infomations} = result[0];
     const isFollowing = follows.some(
       (item) =>
-        item.follower.toString() === id &&
-        item.following.toString() === userViewId
+        item.follower.toString() === userViewId &&
+        item.following.toString() === id
     )
-    userViewId && (infomations.isFollowing = isFollowing)
-    infomations.isSelt = !userViewId
+    id && (infomations.isFollowing = isFollowing)
+    infomations.isSelf = !id
     return infomations
   }
 }
@@ -254,5 +272,5 @@ module.exports = new InfomationService();
 /*
   1/ avt, tên, nickname, số ng theo dõi, số ng đang theo dõi, mô tả, số post của user_id_view
 
-  2/ thông tin cá nhân của user_id_view 
+  2/ thông tin cá nhân của user_id_view
  */

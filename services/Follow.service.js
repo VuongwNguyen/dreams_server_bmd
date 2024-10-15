@@ -72,10 +72,19 @@ class FollowService {
       },
       {
         $addFields: {
-          following:{
+          following: {
+            _id: "$following._id",
             fullname: "$following.fisrt_name $following.last_name",
-          }
-        }
+            avatar: {
+              url: {
+                ifNull: [
+                  "$following.avatar.url",
+                  "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
+                ],
+              },
+            },
+          },
+        },
       },
       {
         $skip: (_page - 1) * _limit, // Phân trang
@@ -84,7 +93,6 @@ class FollowService {
         $limit: _limit, // Giới hạn số lượng kết quả
       },
     ]).exec();
-    
 
     const totalRecords = await Follow.countDocuments({
       follower: new mongoose.Types.ObjectId(user_id),

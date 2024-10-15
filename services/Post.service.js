@@ -574,6 +574,9 @@ class PostService {
     const user = await Account.findOne({ _id: user_id }).lean();
     const userView = await Account.findOne({ _id: user_id_view }).lean();
 
+    console.log("user", user);
+    console.log("userView", userView);
+
     const totalRecords = await Post.countDocuments({
       account_id: user_id_view,
     });
@@ -818,8 +821,10 @@ class PostService {
           likeCount: { $size: "$like" },
           isLiked: { $in: [user_id, "$like"] }, // Kiểm tra người dùng đã like chưa
           commentCount: { $size: "$comments" },
-          fullname: {
-            $concat: ["$author.first_name", " ", "$author.last_name"],
+          author: {
+            fullname: {
+              $concat: ["$author.first_name", " ", "$author.last_name"],
+            },
           },
           tagUsers: {
             $map: {

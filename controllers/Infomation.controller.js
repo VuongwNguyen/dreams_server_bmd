@@ -15,10 +15,18 @@ class InfomationController {
     }).json(res);
   }
 
-  async getInfomation(req, res, next) {
-    const { user_id } = req.user;
-    const { user_id_view } = req.query;
-    const result = await InfomationService.getInfomation({ user_id, user_id_view });
+  // async getInfomation(req, res, next) {
+  //   const { user_id } = req.user;
+  //   const { user_id_view } = req.query;
+  //   const result = await InfomationService.getInfomation({ user_id, user_id_view });
+  //   return new SuccessfullyReponse({
+  //     data: result,
+  //     message: "Get infomation successfully",
+  //   }).json(res);
+  // }
+
+  async getInfomation(req, res, next) {    
+    const result = await InfomationService.getInfomation(req.query.user_id, req.user.user_id);
     return new SuccessfullyReponse({
       data: result,
       message: "Get infomation successfully",

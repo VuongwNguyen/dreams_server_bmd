@@ -9,10 +9,23 @@ router.post(
   asyncHandler(InfomationController.upSertInfomation)
 );
 
+// router.get(
+//   "/get-infomation",
+//   verifyUser,
+//   asyncHandler(InfomationController.getInfomation)
+// );
 router.get(
-  "/get-infomation",
+  "/me",
+  verifyUser,
+  asyncHandler(InfomationController.getMe)
+)
+
+router.get(
+  "/:id",
   verifyUser,
   asyncHandler(InfomationController.getInfomation)
 );
+
+
 
 module.exports = router;

@@ -1,20 +1,8 @@
 const { Account } = require("../models");
 const { ErrorResponse } = require("../core/reponseHandle");
 const { default: mongoose } = require("mongoose");
+const { ENUM_INFOMATION } = require("../utils/Constant");
 
-const keyPartern = [
-  "natl",
-  "htown",
-  "zone",
-  "gender",
-  "dob",
-  "job",
-  "edu",
-  "hobby",
-  "rlts",
-  "zodiac",
-  "des",
-];
 const privacyStatus = ["public", "private"];
 class InfomationService {
   async upSertInfomation({ user_id, payload }) {
@@ -26,7 +14,7 @@ class InfomationService {
         code: 400,
       });
 
-    if (!keyPartern.includes(key))
+    if (!ENUM_INFOMATION.includes(key))
       throw new ErrorResponse({
         message: "Key is incorrect",
         code: 400,
@@ -52,114 +40,218 @@ class InfomationService {
     return result;
   }
 
-  async getInfomation({ user_id, user_id_view }) {
-    const user = await Account.findOne({ _id: user_id_view });
+  // async getInfomation({ user_id, user_id_view }) {
+  //   const user = await Account.findOne({ _id: user_id_view });
 
-    if (!user)
-      throw new ErrorResponse({
-        message: "User not found",
-        code: 400,
-      });
+  //   if (!user)
+  //     throw new ErrorResponse({
+  //       message: "User not found",
+  //       code: 400,
+  //     });
 
-    const infomation = Account.aggregate([
-      {
-        $match: {
-          _id: new mongoose.Types.ObjectId(user_id_view),
-          "infomation.privacy_status": "public",
-        },
-      },
-      {
-        $project: {
-          _id: 1,
-          full_name: { $concat: ["$first_name", " ", "$last_name"] },
-          infomation: 1,
-          avatar: 1,
-        },
-      },
-      {
-        $unwind: "$infomation",
-      },
-      {
-        $group: {
-          _id: "$_id",
-          full_name: { $first: "$full_name" },
-          infomation: { $push: "$infomation" },
-        },
-      },
-      // Thêm lookup để lấy số lượng người đang follow và người theo dõi
+  //   const infomation = Account.aggregate([
+  //     {
+  //       $match: {
+  //         _id: new mongoose.Types.ObjectId(user_id_view),
+  //         "infomation.privacy_status": "public",
+  //       },
+  //     },
+  //     {
+  //       $project: {
+  //         _id: 1,
+  //         full_name: { $concat: ["$first_name", " ", "$last_name"] },
+  //         infomation: 1,
+  //         avatar: 1,
+  //       },
+  //     },
+  //     {
+  //       $unwind: "$infomation",
+  //     },
+  //     {
+  //       $group: {
+  //         _id: "$_id",
+  //         full_name: { $first: "$full_name" },
+  //         infomation: { $push: "$infomation" },
+  //       },
+  //     },
+  //     // Thêm lookup để lấy số lượng người đang follow và người theo dõi
+  //     {
+  //       $lookup: {
+  //         from: "follows",
+  //         let: { user_id: "$_id" },
+  //         pipeline: [
+  //           { $match: { $expr: { $eq: ["$follower", "$$user_id"] } } },
+  //           { $count: "following_count" },
+  //         ],
+  //         as: "following_count",
+  //       },
+  //     },
+  //     {
+  //       $lookup: {
+  //         from: "follows",
+  //         let: { user_id: "$_id" },
+  //         pipeline: [
+  //           { $match: { $expr: { $eq: ["$following", "$$user_id"] } } },
+  //           { $count: "follower_count" },
+  //         ],
+  //         as: "follower_count",
+  //       },
+  //     },
+  //     // Kiểm tra trạng thái follow-back giữa user và user_id_view
+  //     {
+  //       $lookup: {
+  //         from: "follows",
+  //         let: { user_id_view: user_id_view, user_id: user_id },
+  //         pipeline: [
+  //           {
+  //             $match: {
+  //               $expr: {
+  //                 $and: [
+  //                   { $eq: ["$follower", "$$user_id_view"] },
+  //                   { $eq: ["$following", "$$user_id"] },
+  //                 ],
+  //               },
+  //             },
+  //           },
+  //         ],
+  //         as: "is_following",
+  //       },
+  //     },
+  //     {
+  //       $addFields: {
+  //         is_following: { $gt: [{ $size: "$is_following" }, 0] }, // Kiểm tra nếu đã follow hay chưa
+  //         following_count: {
+  //           $ifNull: [
+  //             { $arrayElemAt: ["$following_count.following_count", 0] },
+  //             0,
+  //           ],
+  //         },
+  //         follower_count: {
+  //           $ifNull: [
+  //             { $arrayElemAt: ["$follower_count.follower_count", 0] },
+  //             0,
+  //           ],
+  //         },
+  //         is_viewing_self: {
+  //           $eq: ["$_id", new mongoose.Types.ObjectId(user_id)],
+  //         }, // Kiểm tra xem có phải chính mình không
+  //         description: {
+  //           $ifNull: ["$information.des", null],
+  //         },
+  //       },
+  //     },
+  //   ]);
+
+  //   return infomation;
+  // }
+
+  async getInfomation(id, userViewId) {
+    const pipeline = [
+      { $match: { _id: new mongoose.Types.ObjectId(id) } },
+      //follows
       {
         $lookup: {
           from: "follows",
           let: { user_id: "$_id" },
-          pipeline: [
-            { $match: { $expr: { $eq: ["$follower", "$$user_id"] } } },
-            { $count: "following_count" },
-          ],
-          as: "following_count",
-        },
-      },
-      {
-        $lookup: {
-          from: "follows",
-          let: { user_id: "$_id" },
-          pipeline: [
-            { $match: { $expr: { $eq: ["$following", "$$user_id"] } } },
-            { $count: "follower_count" },
-          ],
-          as: "follower_count",
-        },
-      },
-      // Kiểm tra trạng thái follow-back giữa user và user_id_view
-      {
-        $lookup: {
-          from: "follows",
-          let: { user_id_view: user_id_view, user_id: user_id },
           pipeline: [
             {
               $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$follower", "$$user_id_view"] },
-                    { $eq: ["$following", "$$user_id"] },
-                  ],
-                },
+                $or: [
+                  {
+                    follower: new mongoose.Types.ObjectId(id),
+                  },
+                  {
+                    following: new mongoose.Types.ObjectId(id),
+                  },
+                ],
               },
             },
           ],
-          as: "is_following",
+          as: "follows",
         },
       },
       {
         $addFields: {
-          is_following: { $gt: [{ $size: "$is_following" }, 0] }, // Kiểm tra nếu đã follow hay chưa
-          following_count: {
-            $ifNull: [
-              { $arrayElemAt: ["$following_count.following_count", 0] },
-              0,
-            ],
+          followingCount: {
+            $size: {
+              $filter: {
+                input: "$follows",
+                as: "follow",
+                cond: { $eq: ["$$follow.following", new mongoose.Types.ObjectId(id)] }
+              }
+            }
           },
-          follower_count: {
-            $ifNull: [
-              { $arrayElemAt: ["$follower_count.follower_count", 0] },
-              0,
-            ],
-          },
-          is_viewing_self: {
-            $eq: ["$_id", new mongoose.Types.ObjectId(user_id)],
-          }, // Kiểm tra xem có phải chính mình không
-          description: {
-            $ifNull: ["$information.des", null],
-          },
+          followerCount: {
+            $size: {
+              $filter: {
+                input: "$follows",
+                as: "follow",
+                cond: { $eq: ["$$follow.follower", new mongoose.Types.ObjectId(id)] }
+              }
+            }
+          }
+        }
+      },
+      //posts count
+      {
+        $lookup: {
+          from: "posts",
+          let: { user_id: "$_id" },
+          pipeline: [{ $match: { account_id: new mongoose.Types.ObjectId(id) } }],
+          as: "posts",
         },
       },
-    ]);
-
-    return infomation;
+      {
+        $addFields: {
+          postCount: { $size: "$posts" },
+        },
+      },
+      //project
+      {
+        $project: {
+          _id: 1,
+          full_name: { $concat: ["$last_name", " ", "$first_name"] },
+          email: 1,
+          phone: 1,
+          avatar: 1,
+          infomation: !userViewId
+            ? 1
+            : {
+                $filter: {
+                  input: "$infomation",
+                  as: "info",
+                  cond: { $eq: ["$$info.privacy_status", "public"] },
+                }
+              },
+          avatar: 1,
+          followingCount: 1,
+          followerCount: 1,
+          follows: 1,
+          postCount: 1,
+        },
+      },
+    ];
+    const result = await Account.aggregate(pipeline);
+    if (result.length === 0) {
+      throw new ErrorResponse({
+        message: "User not found",
+        code: 400,
+      });
+    }
+    const {follows,...infomations} = result[0];
+    const isFollowing = follows.some(
+      (item) =>
+        item.follower.toString() === id &&
+        item.following.toString() === userViewId
+    )
+    userViewId && (infomations.isFollowing = isFollowing)
+    infomations.isSelt = !userViewId
+    return infomations
   }
 }
 
 module.exports = new InfomationService();
- /*
+/*
   1/ avt, tên, nickname, số ng theo dõi, số ng đang theo dõi, mô tả, số post của user_id_view
 
   2/ thông tin cá nhân của user_id_view 

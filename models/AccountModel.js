@@ -1,4 +1,5 @@
 const { Schema, model } = require("mongoose");
+const { ENUM_INFOMATION, ROLES: { SUPER_ADMIN, USER } } = require("../utils/Constant");
 
 const AccountSchema = new Schema(
   {
@@ -39,8 +40,8 @@ const AccountSchema = new Schema(
     role: {
       type: String,
       required: true,
-      default: "user",
-      enum: ["user", "superadmin"],
+      default: USER,
+      enum: [USER, SUPER_ADMIN],
     },
     avatar: {
       type: {
@@ -62,20 +63,7 @@ const AccountSchema = new Schema(
           key: {
             type: String,
             required: true,
-            enum: [
-              "natl", // nationality
-              "htown", // hometown
-              "zone", // live in
-              "gender", // gender
-              "dob", // date of birth
-              "job", // job
-              "edu", // education
-              "hobby", // hobby
-              "rlts", // relationship
-              "zodiac", // zodiac
-              "des", // description
-              "nick" // nickname
-            ],
+            enum: ENUM_INFOMATION,
           },
           value: { type: String, required: true },
           privacy_status: {
@@ -83,6 +71,7 @@ const AccountSchema = new Schema(
             default: "public",
             enum: ["public", "private"],
           },
+          _id: false,
         },
         required: false,
       },

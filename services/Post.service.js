@@ -574,6 +574,7 @@ class PostService {
   async getPostByUser({ user_id, user_id_view, _page = 1, _limit = 10 }) {
     if (_page < 1) _page = 1;
     if (_limit < 10) _limit = 10;
+    if (!user_id_view) user_id_view = user_id;
 
     const user = await Account.findOne({ _id: user_id }).lean();
     const userView = await Account.findOne({ _id: user_id_view }).lean();
@@ -581,8 +582,6 @@ class PostService {
     const totalRecords = await Post.countDocuments({
       account_id: user_id_view,
     });
-
-    console.log("totalRecords", totalRecords);
 
     if (!user || !userView)
       throw new ErrorResponse({

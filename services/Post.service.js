@@ -563,8 +563,12 @@ class PostService {
     } else {
       post.like.push(user_id); // thêm id user vào mảng like
     }
+    const result = await post.save();
 
-    await post.save();
+    return {
+      currentLike: result.like.length,
+      isLiked: result.like.includes(user_id),
+    };
   }
 
   async getPostByUser({ user_id, user_id_view, _page = 1, _limit = 10 }) {
@@ -573,9 +577,6 @@ class PostService {
 
     const user = await Account.findOne({ _id: user_id }).lean();
     const userView = await Account.findOne({ _id: user_id_view }).lean();
-
-    console.log("user", user);
-    console.log("userView", userView);
 
     const totalRecords = await Post.countDocuments({
       account_id: user_id_view,

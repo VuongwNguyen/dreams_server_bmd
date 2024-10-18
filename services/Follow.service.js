@@ -77,7 +77,7 @@ class FollowService {
             fullname: "$following.fisrt_name $following.last_name",
             avatar: {
               url: {
-                ifNull: [
+                $ifNull: [
                   "$following.avatar.url",
                   "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
                 ],

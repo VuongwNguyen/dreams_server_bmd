@@ -15,4 +15,16 @@ router.get(
   asyncHandler(InfomationController.getInfomation)
 );
 
+router.get(
+  "/get-infomation-list",
+  verifyUser,
+  asyncHandler(InfomationController.getInfomationList)
+);
+
+router.get(
+  "/get-infomation-by-self-setting",
+  verifyUser,
+  asyncHandler(InfomationController.getInfomationBySelfSetting)
+);
+
 module.exports = router;

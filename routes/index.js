@@ -13,5 +13,6 @@ router.use("/post", require("./Post.routes"));
 router.use("/comment", require("./Comment.routes"));
 router.use("/follow", require("./Follow.routes"));
 router.use("/infomation", require("./Infomation.routes"));
+router.use("/report-reason", require("./ReportReason.routes"));
 
 module.exports = router;

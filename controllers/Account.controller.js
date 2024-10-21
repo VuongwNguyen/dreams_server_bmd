@@ -56,11 +56,11 @@ class AccountController {
 
   async changePassword(req, res, next) {
     const { oldPassword, newPassword } = req.body;
-    const {user_id} = req.user;
+    const { user_id } = req.user;
     await AccountService.changePassword({
       oldPassword,
       newPassword,
-      user_id,
+      userId: user_id,
     });
     return new SuccessfullyReponse({
       message: "Change password successfully",

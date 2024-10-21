@@ -455,15 +455,15 @@ class PostService {
           author: {
             _id: 1,
             fullname: 1,
-          },
-          avatar: {
-            url: {
-              $ifNull: [
-                "$avatar.url",
-                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-              ],
+            avatar: {
+              url: {
+                $ifNull: [
+                  "$avatar.url",
+                  "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
+                ],
+              },
+              public_id: 1,
             },
-            public_id: 1,
           },
           title: 1,
           content: 1,
@@ -697,15 +697,7 @@ class PostService {
           content: 1,
           createdAt: 1,
           privacy_status: 1,
-          avatar: {
-            url: {
-              $ifNull: [
-                "$avatar.url",
-                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-              ],
-            },
-            public_id: 1,
-          },
+
           images: {
             url: 1,
             _id: 1,
@@ -725,6 +717,15 @@ class PostService {
           author: {
             _id: 1,
             fullname: 1,
+            avatar: {
+              url: {
+                $ifNull: [
+                  "$avatar.url",
+                  "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
+                ],
+              },
+              public_id: 1,
+            },
           },
           likeCount: 1,
           isLiked: 1,

@@ -662,9 +662,6 @@ class PostService {
           likeCount: { $size: "$like" },
           isLiked: { $in: [user_id, "$like"] }, // Kiểm tra người dùng đã like chưa
           commentCount: { $size: "$comments" },
-          fullname: {
-            $concat: ["$author.first_name", " ", "$author.last_name"],
-          },
           tagUsers: {
             $map: {
               input: "$tagUsers",
@@ -712,7 +709,9 @@ class PostService {
           },
           author: {
             _id: 1,
-            fullname: 1,
+            fullname: {
+              $concat: ["$author.first_name", " ", "$author.last_name"],
+            },
             avatar: {
               $ifNull: [
                 "$avatar.url",

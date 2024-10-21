@@ -22,5 +22,6 @@ router.post(
 router.post("/reset-password", asyncHandler(AccountController.resetPassword));
 router.post("/renew-tokens", asyncHandler(AccountController.renewTokens));
 router.post("/logout", verifyUser, asyncHandler(AccountController.logout));
+router.post("/get-name-avatar-user", verifyUser, asyncHandler(AccountController.getNameAvatarUser));
 
 module.exports = router;

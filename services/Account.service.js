@@ -258,6 +258,18 @@ class AccountService {
   async logout(userId) {
     return await keystoreService.removeKeyStore(userId);
   }
+
+  async getNameAvatarUser(user_id) {
+    const user = await Account.findOne({ _id: user_id }).lean();
+
+    user.full_name = `${user.first_name} ${user.last_name}`;
+    user.avatar = user.avatar || "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg";
+
+    return {
+      full_name: user.full_name,
+      avatar: user.avatar,
+    };
+  }
 }
 
 module.exports = new AccountService();

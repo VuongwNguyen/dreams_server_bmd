@@ -56,11 +56,11 @@ class AccountController {
 
   async changePassword(req, res, next) {
     const { oldPassword, newPassword } = req.body;
-    const userId = req.user.userId;
+    const { user_id } = req.user;
     await AccountService.changePassword({
       oldPassword,
       newPassword,
-      userId,
+      userId: user_id,
     });
     return new SuccessfullyReponse({
       message: "Change password successfully",
@@ -93,6 +93,16 @@ class AccountController {
     await AccountService.logout(userId);
     new SuccessfullyReponse({
       message: "Logout successfully",
+      code: 200,
+    }).json(res);
+  }
+
+  async getNameAvatarUser(req, res, next) {
+    const { user_id } = req.user;
+    const user = await AccountService.getNameAvatarUser(user_id);
+    new SuccessfullyReponse({
+      data: user,
+      message: "Get name and avatar user successfully",
       code: 200,
     }).json(res);
   }

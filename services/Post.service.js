@@ -251,6 +251,12 @@ class PostService {
             fullname: {
               $concat: ["$author.first_name", " ", "$author.last_name"],
             },
+            avatar: {
+              $ifNull: [
+                "$avatar.url",
+                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
+              ],
+            },
           },
           followedStatus: {
             $cond: {
@@ -272,13 +278,10 @@ class PostService {
             _id: 1,
             fullname: 1,
             avatar: {
-              url: {
-                $ifNull: [
-                  "$author.avatar.url",
-                  "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-                ],
-              },
-              public_id: 1,
+              $ifNull: [
+                "$avatar.url",
+                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
+              ],
             },
           },
           title: 1,
@@ -427,6 +430,12 @@ class PostService {
             fullname: {
               $concat: ["$author.first_name", " ", "$author.last_name"],
             },
+            avatar: {
+              $ifNull: [
+                "author.avatar.url",
+                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
+              ],
+            },
           },
           tagUsers: {
             $map: {
@@ -455,15 +464,12 @@ class PostService {
           author: {
             _id: 1,
             fullname: 1,
-          },
-          avatar: {
-            url: {
+            avatar: {
               $ifNull: [
                 "$avatar.url",
                 "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
               ],
             },
-            public_id: 1,
           },
           title: 1,
           content: 1,
@@ -563,13 +569,18 @@ class PostService {
     } else {
       post.like.push(user_id); // thêm id user vào mảng like
     }
+    const result = await post.save();
 
-    await post.save();
+    return {
+      currentLike: result.like.length,
+      isLiked: result.like.includes(user_id),
+    };
   }
 
   async getPostByUser({ user_id, user_id_view, _page = 1, _limit = 10 }) {
     if (_page < 1) _page = 1;
     if (_limit < 10) _limit = 10;
+    if (!user_id_view) user_id_view = user_id;
 
     const user = await Account.findOne({ _id: user_id }).lean();
     const userView = await Account.findOne({ _id: user_id_view }).lean();
@@ -577,8 +588,6 @@ class PostService {
     const totalRecords = await Post.countDocuments({
       account_id: user_id_view,
     });
-
-    console.log("totalRecords", totalRecords);
 
     if (!user || !userView)
       throw new ErrorResponse({
@@ -663,9 +672,6 @@ class PostService {
           likeCount: { $size: "$like" },
           isLiked: { $in: [user_id, "$like"] }, // Kiểm tra người dùng đã like chưa
           commentCount: { $size: "$comments" },
-          fullname: {
-            $concat: ["$author.first_name", " ", "$author.last_name"],
-          },
           tagUsers: {
             $map: {
               input: "$tagUsers",
@@ -694,15 +700,7 @@ class PostService {
           content: 1,
           createdAt: 1,
           privacy_status: 1,
-          avatar: {
-            url: {
-              $ifNull: [
-                "$avatar.url",
-                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-              ],
-            },
-            public_id: 1,
-          },
+
           images: {
             url: 1,
             _id: 1,
@@ -721,7 +719,15 @@ class PostService {
           },
           author: {
             _id: 1,
-            fullname: 1,
+            fullname: {
+              $concat: ["$author.first_name", " ", "$author.last_name"],
+            },
+            avatar: {
+              $ifNull: [
+                "$avatar.url",
+                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
+              ],
+            },
           },
           likeCount: 1,
           isLiked: 1,
@@ -818,8 +824,10 @@ class PostService {
           likeCount: { $size: "$like" },
           isLiked: { $in: [user_id, "$like"] }, // Kiểm tra người dùng đã like chưa
           commentCount: { $size: "$comments" },
-          fullname: {
-            $concat: ["$author.first_name", " ", "$author.last_name"],
+          author: {
+            fullname: {
+              $concat: ["$author.first_name", " ", "$author.last_name"],
+            },
           },
           tagUsers: {
             $map: {
@@ -849,13 +857,10 @@ class PostService {
             _id: 1,
             fullname: 1,
             avatar: {
-              url: {
-                $ifNull: [
-                  "$author.avatar.url",
-                  "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-                ],
-              },
-              public_id: 1,
+              $ifNull: [
+                "$avatar.url",
+                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
+              ],
             },
           },
           title: 1,

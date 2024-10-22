@@ -22,4 +22,46 @@ const verifyUser = (req, res, next) => {
   });
 };
 
-module.exports = verifyUser;
+const verifyAdmin = async (req, res, next) => {
+  try {
+    const { user_id } = req.user;
+
+    // Find the user with the role 'admin' or 'superadmin'
+    const checkAdmin = await Account.findById(user_id)
+      .where({
+        role: { $in: ["admin", "superadmin"] },
+      })
+      .lean();
+
+    if (!checkAdmin) {
+      return next(
+        new ErrorResponse({
+          message: "You are not admin",
+          code: 401,
+        })
+      );
+    }
+
+    next();
+  } catch (err) {
+    next(err); // Pass the error to the next middleware
+  }
+};
+
+const verifySuperAdmin = (req, res, next) => {
+  const { user_id } = req.user;
+  const checkSuperAdmin = Account.findById(user_id)
+    .where({
+      role: "superadmin",
+    })
+    .learn();
+
+  if (!checkSuperAdmin) {
+    return new ErrorResponse({
+      message: "You are not super admin",
+    }).json(res);
+  }
+  next();
+};
+
+module.exports = { verifyUser, verifyAdmin, verifySuperAdmin };

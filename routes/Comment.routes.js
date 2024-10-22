@@ -1,5 +1,5 @@
 const express = require("express");
-const verifyUser = require("../middlewares/verifyUser");
+const { verifyUser } = require("../middlewares/verifyUser");
 const asyncHandler = require("../core/asyncHandler");
 const CommentController = require("../controllers/Comment.controller");
 const router = express.Router();

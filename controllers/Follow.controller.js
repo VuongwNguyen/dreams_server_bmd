@@ -26,11 +26,25 @@ class FollowController {
       _page,
       _limit,
     });
-    
 
     return new SuccessfullyReponse({
       data: followings,
       message: "Get followings successfully",
+    }).json(res);
+  }
+
+  async getFollowers(req, res) {
+    const { user_id } = req.user;
+    const { _page, _limit } = req.query;
+    const followers = await FollowService.getFollowers({
+      user_id,
+      _page,
+      _limit,
+    });
+
+    return new SuccessfullyReponse({
+      data: followers,
+      message: "Get followers successfully",
     }).json(res);
   }
 }

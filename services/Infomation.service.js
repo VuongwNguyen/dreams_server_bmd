@@ -213,6 +213,7 @@ class InfomationService {
   }
 
   async getInfomationList({ user_id, user_id_view }) {
+    if(!user_id_view) user_id_view = user_id;
     const result = await Account.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(user_id_view) } },
       {
@@ -273,6 +274,8 @@ class InfomationService {
       {
         $project: {
           infomation: 1,
+          avatar: 1,
+          fullname: { $concat: ["$last_name", " ", "$first_name"] },
         },
       },
     ]);
@@ -285,7 +288,15 @@ class InfomationService {
       OTHER_INFORMATION.includes(item.key)
     );
 
-    return { basicInformation, otherInformation };
+    basicInformation.push({
+      key: "fullname",
+      value: result[0].fullname,
+    });
+
+    const avatar =
+      result[0].avatar?.url ||
+      "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg";
+    return { avatar, basicInformation, otherInformation };
   }
 }
 

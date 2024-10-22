@@ -46,6 +46,7 @@ class InfomationService {
   }
 
   async getInfomation({ user_id, user_id_view }) {
+    if(!user_id_view) user_id_view = user_id;
     const result = await Account.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(user_id_view) } },
 

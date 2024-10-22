@@ -1,4 +1,5 @@
 const { Schema, model } = require("mongoose");
+const { ENUM_INFORMATION } = require("../utils/constants");
 
 const AccountSchema = new Schema(
   {
@@ -40,7 +41,7 @@ const AccountSchema = new Schema(
       type: String,
       required: true,
       default: "user",
-      enum: ["user", "superadmin"],
+      enum: ["user", "admin", "superadmin"],
     },
     avatar: {
       type: {
@@ -62,20 +63,7 @@ const AccountSchema = new Schema(
           key: {
             type: String,
             required: true,
-            enum: [
-              "natl", // nationality
-              "htown", // hometown
-              "zone", // live in
-              "gender", // gender
-              "dob", // date of birth
-              "job", // job
-              "edu", // education
-              "hobby", // hobby
-              "rlts", // relationship
-              "zodiac", // zodiac
-              "des", // description
-              "nick" // nickname
-            ],
+            enum: ENUM_INFORMATION,
           },
           value: { type: String, required: true },
           privacy_status: {

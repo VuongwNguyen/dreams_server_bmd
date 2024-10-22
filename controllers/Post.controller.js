@@ -82,7 +82,7 @@ class PostController {
   }
 
   async getPostByUser(req, res) {
-    const { user_id_view, _page, _limit } = req.params;
+    const { user_id_view, _page, _limit } = req.query;
     const user_id = req.user.user_id;
     const post = await PostService.getPostByUser({
       user_id,

@@ -13,9 +13,22 @@ const ENUM_INFORMATION = [
   "nick", // nickname
 ];
 
-const BASIC_INFORMATION = ["nick", "dob", "natl", "htown", "gender", "zodiac"];
-const OTHER_INFORMATION = ["zone", "job", "edu", "hobby", "rlts", "des"];
+const BASIC_INFORMATION = ["nick", "dob", "natl", "htown", "gender"];
+const OTHER_INFORMATION = [
+  "zone",
+  "job",
+  "edu",
+  "hobby",
+  "rlts",
+  "des",
+  "zodiac",
+];
 
 const ENUM_TYPE = ["post", "comment", "user"];
 
-module.exports = { ENUM_INFORMATION, ENUM_TYPE, BASIC_INFORMATION, OTHER_INFORMATION };
+module.exports = {
+  ENUM_INFORMATION,
+  ENUM_TYPE,
+  BASIC_INFORMATION,
+  OTHER_INFORMATION,
+};

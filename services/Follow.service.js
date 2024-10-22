@@ -53,6 +53,8 @@ class FollowService {
   }
 
   async getFollowings({ user_id, _page = 1, _limit = 10 }) {
+    if (!_page || _page) _page = 1;
+    if (!_limit || _limit) _limit = 10;
     const followings = await Follow.aggregate([
       {
         $match: {
@@ -76,12 +78,10 @@ class FollowService {
             _id: "$following._id",
             fullname: "$following.fisrt_name $following.last_name",
             avatar: {
-              url: {
-                $ifNull: [
-                  "$following.avatar.url",
-                  "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-                ],
-              },
+              $ifNull: [
+                "$following.avatar.url",
+                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
+              ],
             },
           },
         },
@@ -114,10 +114,13 @@ class FollowService {
   }
 
   async getFollowers({ user_id, _page = 1, _limit = 10 }) {
+    if (!_page || _page) _page = 1;
+    if (!_limit || _limit) _limit = 10;
+
     const followers = await Follow.aggregate([
       {
         $match: {
-          following: mongoose.Types.ObjectId(user_id),
+          following: new mongoose.Types.ObjectId(user_id),
         },
       },
       {
@@ -134,22 +137,27 @@ class FollowService {
       {
         $project: {
           follower: {
-            _id: 1,
-            username: 1,
-            avatar: 1,
+            _id: "$follower._id",
+            fullname: "$following.fisrt_name $following.last_name",
+            avatar: {
+              $ifNull: [
+                "$following.avatar.url",
+                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
+              ],
+            },
           },
         },
       },
       {
-        $skip: (_page - 1) * _limit,
+        $skip: +(_page - 1) * _limit,
       },
       {
-        $limit: _limit,
+        $limit: +_limit,
       },
-    ]).explain("executionStats");
+    ]).exec();
 
     const totalRecords = await Follow.countDocuments({
-      following: mongoose.Types.ObjectId(user_id),
+      following: new mongoose.Types.ObjectId(user_id),
     });
 
     if (!followers)

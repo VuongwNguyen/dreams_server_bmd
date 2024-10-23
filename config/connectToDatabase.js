@@ -19,9 +19,9 @@ class Database {
   }
 
   async connect() {
-    if (!this._connection) {  
+    if (!this._connection) {
       try {
-        this._connection = await mongoose.connect(uri, options);
+        this._connection = await mongoose.connect(uri);
         console.log(`Connected to database: ${DBName}`);
       } catch (error) {
         console.error("Error connecting to database: ", error);
@@ -34,7 +34,7 @@ class Database {
     if (this._connection) {
       try {
         await mongoose.disconnect();
-        this._connection = null; 
+        this._connection = null;
         console.log("Disconnected from database");
       } catch (error) {
         console.error("Error disconnecting from database: ", error);
@@ -46,7 +46,7 @@ class Database {
     if (this._connection) {
       return this._connection;
     }
-    return this.connect(); 
+    return this.connect();
   }
 }
 

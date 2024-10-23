@@ -14,6 +14,7 @@ const verifyUser = (req, res, next) => {
 
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decode) => {
     if (err) {
+      err.code = 401;
       return next(err);
     }
 

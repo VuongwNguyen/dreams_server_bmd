@@ -25,13 +25,13 @@ class KeyStoreService {
   }
 
   async addRefreshTokenIntoBlackList({
-    userId,
+    user_id,
     newRefreshToken,
     refreshToken,
   }) {
     const keyStore = await KeyStore.findOneAndUpdate(
       {
-        user_id: userId,
+        user_id,
       },
       {
         current_refresh_token: newRefreshToken,

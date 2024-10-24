@@ -217,13 +217,14 @@ class AccountService {
         await keystoreService.removeKeyStore(user._id);
         throw new ErrorResponse({
           message: "Something went wrong, please login",
+          code: 401,
         });
       }
 
       if (!user) {
         throw new ErrorResponse({
-          message: "User not found",
-          code: 400,
+          message: "User not found, please login",
+          code: 401,
         });
       }
 
@@ -241,17 +242,10 @@ class AccountService {
 
       return tokens;
     } catch (error) {
-      if (
-        error.message === "jwt expired" ||
-        error.message === "invalid signature"
-      ) {
-        throw new ErrorResponse({
-          message: "Something went wrong, please login",
-          code: 401,
-        });
-      }
-
-      throw error;
+      throw new ErrorResponse({
+        message: "Something went wrong, please login",
+        code: 401,
+      });
     }
   }
 

@@ -7,10 +7,10 @@ const MessageSchema = new Schema(
       ref: "Room",
       required: true,
     },
-    sender_id: {
+    replied_id: {
       type: Schema.Types.ObjectId,
-      ref: "Account",
-      required: true,
+      ref: "Message",
+      required: false,
     },
     content: {
       type: String,

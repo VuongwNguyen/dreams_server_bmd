@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+    <span id="login-status"></span><br />
+    <span id="socket-status"></span> <br />
+    <hr />
+    <form id="login-form">
+      <input type="text" placeholder="username" value="sang1@gmail.com" />
+      <input type="password" placeholder="password" value="sang1912" />
+      <button>login</button>
+    </form>
+    <hr />
+    <button id="connect-socket">connect socket</button>
+
+    <button id="test-btn">test hello event</button>
+
+    <button id="fetch-btn">fetch user follow</button>
+
+    <button id="clear-btn">clear chat</button>
+
+    <button id="fetch-room-btn">fetch rooms</button>
+    <hr />
+    <label> list user: </label>
+    <select id="list-users"></select>
+    <label> room: </label>
+    <select id="list-rooms"></select>
+    <hr />
+    <div>
+      <input type="text" placeholder="message" />
+      <button>send</button>
+    </div>
+    <hr />
+    <div>
+      <label> Message: </label>
+      <ul id="list-message"></ul>
+    </div>
+
+    <script src="/scripts/test.js"></script>
+  </body>
+</html>

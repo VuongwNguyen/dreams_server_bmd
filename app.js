@@ -22,6 +22,11 @@ app.use(express.static(path.join(__dirname, "public")));
 // routes
 app.use("/api", require("./routes"));
 
+// test
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "/view/index.html"));
+});
+
 // connect to database
 database.connect();
 

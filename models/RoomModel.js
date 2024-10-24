@@ -1,5 +1,17 @@
 const { Schema, model } = require("mongoose");
 
+const membersSchema = new Schema({
+  account_id: {
+    type: Schema.Types.ObjectId,
+    ref: "Account",
+    required: true,
+  },
+  joined_at: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
 const RoomSchema = new Schema(
   {
     type: {
@@ -16,21 +28,10 @@ const RoomSchema = new Schema(
       ref: "Account",
       required: true,
     },
-    members: [
-      {
-        type: {
-          account_id: {
-            type: Schema.Types.ObjectId,
-            ref: "Account",
-            required: true,
-          },
-          joined_at: {
-            type: Date,
-            default: Date.now,
-          },
-        },
-      },
-    ],
+    members: {
+      type: [membersSchema],
+      default: [],
+    },
   },
   {
     timestamps: true,

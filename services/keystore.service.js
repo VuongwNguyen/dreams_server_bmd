@@ -3,7 +3,7 @@ const { KeyStore } = require("../models");
 class KeyStoreService {
   async upsertKeyStore({ user_id, refreshToken }) {
     const filter = {
-      user_id, 
+      user_id,
     };
     const update = {
       current_refresh_token: refreshToken,
@@ -25,13 +25,13 @@ class KeyStoreService {
   }
 
   async addRefreshTokenIntoBlackList({
-    userId,
+    user_id,
     newRefreshToken,
     refreshToken,
   }) {
     const keyStore = await KeyStore.findOneAndUpdate(
       {
-        user_id: userId,
+        user_id: user_id,
       },
       {
         current_refresh_token: newRefreshToken,

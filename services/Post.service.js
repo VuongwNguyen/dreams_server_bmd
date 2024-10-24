@@ -219,7 +219,7 @@ class PostService {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$follower", user_id] },
+                    { $eq: ["$follower", new mongoose.Types.ObjectId(user_id)] },
                     { $eq: ["$following", "$following"] },
                   ],
                 },
@@ -232,7 +232,7 @@ class PostService {
       {
         $addFields: {
           likeCount: { $size: "$like" },
-          isLiked: { $in: [user_id, "$like"] }, // Kiểm tra người dùng đã like chưa
+          isLiked: { $in: [new mongoose.Types.ObjectId(user_id), "$like"] }, // Kiểm tra người dùng đã like chưa
           commentCount: { $size: "$comments" },
           tagUsers: {
             $map: {
@@ -311,15 +311,14 @@ class PostService {
         },
       },
     ]);
-
     return {
       list: posts,
       page: {
-        maxPage: Math.ceil(totalRecords / _limit),
-        currentPage: _page,
+        maxPage: Math.ceil(totalRecords / +_limit),
+        currentPage: +_page,
         limit: _limit,
-        hasNext: posts.length === _limit,
-        hasPrevious: _page > 1,
+        hasNext: posts.length === +_limit,
+        hasPrevious: +_page > 1,
       },
     };
   }
@@ -410,7 +409,7 @@ class PostService {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$follower", user_id] },
+                    { $eq: ["$follower", new mongoose.Types.ObjectId(user_id)] },
                     { $eq: ["$following", "$following"] },
                   ],
                 },
@@ -423,7 +422,7 @@ class PostService {
       {
         $addFields: {
           likeCount: { $size: "$like" },
-          isLiked: { $in: [user_id, "$like"] }, // Kiểm tra người dùng đã like chưa
+          isLiked: { $in: [new mongoose.Types.ObjectId(user_id), "$like"] }, // Kiểm tra người dùng đã like chưa
           commentCount: { $size: "$comments" },
           author: {
             _id: "$author._id",
@@ -552,7 +551,7 @@ class PostService {
 
   async likePost({ user_id, post_id }) {
     const user = await Account.findOne({ _id: user_id });
-
+    let msg = "";
     if (!user) {
       throw new ErrorResponse({ message: "User not found", code: 401 });
     }
@@ -564,16 +563,21 @@ class PostService {
     }
 
     if (post.like.includes(user_id)) {
-      // nếu đã like rồi thì bỏ like
-      post.like = post.like.filter((id) => id !== user_id); // loại bỏ id user khỏi mảng like
+      await Post.updateOne({ _id: post_id }, { $pull: { like: user_id } });
+      msg = "Unlike success";
     } else {
-      post.like.push(user_id); // thêm id user vào mảng like
+      await Post.updateOne({ _id: post_id }, { $addToSet: { like: user_id } });
+      msg = "Like success";
     }
-    const result = await post.save();
+
+    const result = await Post.findOne({ _id: post_id });
 
     return {
-      currentLike: result.like.length,
-      isLiked: result.like.includes(user_id),
+      message: msg,
+      data: {
+        currentLike: result.like.length,
+        isLiked: result.like.includes(user_id),
+      },
     };
   }
 
@@ -657,7 +661,7 @@ class PostService {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$follower", user_id] },
+                    { $eq: ["$follower", new mongoose.Types.ObjectId(user_id)] },
                     { $eq: ["$following", "$following"] },
                   ],
                 },
@@ -670,7 +674,7 @@ class PostService {
       {
         $addFields: {
           likeCount: { $size: "$like" },
-          isLiked: { $in: [user_id, "$like"] }, // Kiểm tra người dùng đã like chưa
+          isLiked: { $in: [new mongoose.Types.ObjectId(user_id), "$like"] }, // Kiểm tra người dùng đã like chưa
           commentCount: { $size: "$comments" },
           tagUsers: {
             $map: {
@@ -809,7 +813,7 @@ class PostService {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$follower", user_id] },
+                    { $eq: ["$follower", new mongoose.Types.ObjectId(user_id)] },
                     { $eq: ["$following", "$following"] },
                   ],
                 },
@@ -822,7 +826,7 @@ class PostService {
       {
         $addFields: {
           likeCount: { $size: "$like" },
-          isLiked: { $in: [user_id, "$like"] }, // Kiểm tra người dùng đã like chưa
+          isLiked: { $in: [new mongoose.Types.ObjectId(user_id), "$like"] }, // Kiểm tra người dùng đã like chưa
           commentCount: { $size: "$comments" },
           author: {
             fullname: {
@@ -1036,6 +1040,25 @@ class PostService {
         hasNext: posts.length === _limit,
         hasPrevious: _page > 1,
       },
+    };
+  }
+
+  async SuspensionOfPosting({ post_id, reason }) {
+    const post = await Post.findOne({ _id: post_id });
+
+    post.violateion.status = true;
+    post.violateion.reason = reason;
+
+    const suspen = await post.save();
+    if (!suspen) {
+      throw new ErrorResponse({
+        message: "Failed to suspend post",
+        code: 400,
+      });
+    }
+    return {
+      data: suspen,
+      message: "Post has been suspended",
     };
   }
 }

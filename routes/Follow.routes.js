@@ -7,5 +7,9 @@ router.use(verifyUser);
 router.post("/toggle-follow", asyncHandler(FollowController.toggleFollowUser));
 router.get("/get-followings", asyncHandler(FollowController.getFollowings));
 router.get("/get-followers", asyncHandler(FollowController.getFollowers));
+router.get(
+  "/get-followings-chat",
+  asyncHandler(FollowController.getFollowingsForChat)
+);
 
 module.exports = router;

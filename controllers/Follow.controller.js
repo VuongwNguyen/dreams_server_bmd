@@ -47,6 +47,20 @@ class FollowController {
       message: "Get followers successfully",
     }).json(res);
   }
+
+  async getFollowingsForChat(req, res) {
+    const { user_id } = req.user;
+    const { _page, _limit } = req.query;
+
+    new SuccessfullyReponse({
+      message: "get followings success",
+      data: await FollowService.getFollowingsForChat({
+        user_id,
+        _limit,
+        _page,
+      }),
+    }).json(res);
+  }
 }
 
 module.exports = new FollowController();

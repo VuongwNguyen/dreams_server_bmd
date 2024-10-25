@@ -2,6 +2,7 @@ const { Follow, Account } = require("../models");
 
 const { ErrorResponse } = require("../core/reponseHandle");
 const mongoose = require("mongoose");
+const { usersOnline } = require("../socket");
 
 class FollowService {
   async toggleFollowUser({ user_id, following }) {
@@ -169,6 +170,66 @@ class FollowService {
         limit: _limit,
         hasNext: followers.length === _limit,
         hasPrevious: _page > 1,
+      },
+    };
+  }
+
+  async getFollowingsForChat({ user_id, _page = 1, _limit = 20 }) {
+    _page = parseInt(_page);
+    _limit = parseInt(_limit);
+
+    const total = await Follow.countDocuments({ follower: user_id });
+
+    const followings = await Follow.aggregate([
+      {
+        $match: {
+          follower: new mongoose.Types.ObjectId(user_id),
+        },
+      },
+      {
+        $lookup: {
+          from: "accounts",
+          localField: "following",
+          foreignField: "_id",
+          as: "following",
+        },
+      },
+      {
+        $unwind: "$following",
+      },
+      {
+        $skip: (_page - 1) * _limit,
+      },
+      {
+        $limit: _limit,
+      },
+      {
+        $project: {
+          _id: "$following._id",
+          fullname: {
+            $concat: ["$following.first_name", " ", "$following.last_name"],
+          },
+          avatar: "$following.avatar.url",
+          isOnline: {
+            $in: [
+              "$following._id",
+              Object.values(usersOnline).map(
+                (user) => new mongoose.Types.ObjectId(user.user_id)
+              ),
+            ],
+          },
+        },
+      },
+    ]);
+
+    return {
+      list: followings,
+      page: {
+        limit: _limit,
+        current: _page,
+        next: followings.length === _limit,
+        prev: _page > 1,
+        max: Math.ceil(total / _limit),
       },
     };
   }

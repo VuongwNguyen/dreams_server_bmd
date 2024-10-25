@@ -53,8 +53,6 @@ class FollowService {
   }
 
   async getFollowings({ user_id, _page = 1, _limit = 10 }) {
-    if (!_page || _page) _page = 1;
-    if (!_limit || _limit) _limit = 10;
     const followings = await Follow.aggregate([
       {
         $match: {
@@ -87,10 +85,10 @@ class FollowService {
         },
       },
       {
-        $skip: (_page - 1) * _limit, // Phân trang
+        $skip: (+_page - 1) * +_limit, // Phân trang
       },
       {
-        $limit: _limit, // Giới hạn số lượng kết quả
+        $limit: +_limit, // Giới hạn số lượng kết quả
       },
     ]).exec();
 
@@ -105,10 +103,10 @@ class FollowService {
       list: followings,
       page: {
         maxPage: Math.ceil(totalRecords / _limit),
-        currentPage: _page,
-        limit: _limit,
-        hasNext: followings.length === _limit,
-        hasPrevious: _page > 1,
+        currentPage: +_page,
+        limit: +_limit,
+        hasNext: followings.length === +_limit,
+        hasPrevious: +_page > 1,
       },
     };
   }

@@ -5,6 +5,7 @@ let headersOption = {
   "Content-type": "application/json",
 };
 
+// login
 document.getElementById("login-form").addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -33,6 +34,7 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
   document.getElementById("login-status").innerText = data.message;
 });
 
+// fetch list user
 document.getElementById("fetch-btn").addEventListener("click", async () => {
   let response = await fetch(
     "http://localhost:8012/api/follow/get-followings?_page=1&_limit=20",
@@ -57,22 +59,40 @@ document.getElementById("fetch-btn").addEventListener("click", async () => {
     const option = document.createElement("option");
     option.value = element.following._id;
     option.innerText =
-      element.following.first_name + " " + element.following.last_name;
+      "@" +
+      element.following._id.slice(-3) +
+      " " +
+      element.following.first_name +
+      " " +
+      element.following.last_name;
 
     selection.appendChild(option);
   });
 });
 
+//test event
 document.getElementById("test-btn").addEventListener("click", () => {
-  socket?.emit("mock");
+  socket?.emit("test");
 });
 
-document.getElementById("clear-btn").addEventListener("click", () => {});
+// send message event
+document.getElementById("send").addEventListener("click", () => {
+  const mess = document.getElementById("mess").value;
+  const participant = document.getElementById("list-users").value;
+  socket?.emit("message", mess, participant);
+});
 
+// clear list message
+document.getElementById("clear-btn").addEventListener("click", () => {
+  document.getElementById("list-message").innerHTML = "";
+});
+
+// fetch room list
 document
   .getElementById("fetch-room-btn")
   .addEventListener("click", async () => {});
 
+// connect socket io after login and listen socket event
 document.getElementById("connect-socket").addEventListener("click", () => {
   socket = io({
     auth: {
@@ -84,4 +104,25 @@ document.getElementById("connect-socket").addEventListener("click", () => {
     "Connect socket success!!!";
 
   socket.on("hello", () => console.log("Receive event hello"));
+
+  socket.on("new-room", (roomId, mess, author) => {
+    console.log("room id: ", roomId);
+    console.log("mess: ", mess);
+
+    const list = document.getElementById("list-message");
+
+    const rooms = document.getElementById("list-rooms");
+
+    const room = document.createElement("option");
+
+    room.value = roomId;
+    room.innerText = `@${roomId}`;
+
+    rooms.appendChild(room);
+
+    const message = document.createElement("li");
+    message.innerText = `${author}: ${mess}`;
+
+    list.appendChild(message);
+  });
 });

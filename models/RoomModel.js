@@ -38,14 +38,14 @@ const RoomSchema = new Schema(
   }
 );
 
-RoomSchema.pre("save", async (next) => {
+RoomSchema.pre("save", async function (next) {
   const user = await User.findOne({ _id: this.host }).lean();
-  if (user) {
+  if (!user) {
     next(new Error("Host doesn't exist"));
     return;
   }
 
-  if (this.name.length <= 0 && this.members.length > 2) {
+  if (!this.name && this.members.length > 2) {
     this.name = `${user.first_name} ${user.last_name}'s group`;
   }
 

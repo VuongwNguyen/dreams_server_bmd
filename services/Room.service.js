@@ -1,21 +1,28 @@
 const Room = require("../models/RoomModel");
+const mongoose = require("mongoose");
+const ObjectId = mongoose.Types.ObjectId;
 
 class RoomService {
   async createDirectRoom({ members = [] }) {
     const room = await Room.create({
-      members: members,
+      members: members.map((mem) => ({
+        account_id: mem,
+      })),
+      host: members[0],
     });
 
     return room.toObject();
   }
 
   async getDirectRoom({ members = [] }) {
-    const sortedMembers = members.sort();
+    const sortedMembers = members.sort().map((mem) => new ObjectId(mem));
 
-    const room = await Room.findOne({ members: sortedMembers }).lean();
+    const room = await Room.findOne({
+      "members.account_id": sortedMembers,
+    }).lean();
 
     if (!room) {
-      return await this.createDirectRoom({ userIds: sortedMembers });
+      return await this.createDirectRoom({ members: sortedMembers });
     }
 
     return room;

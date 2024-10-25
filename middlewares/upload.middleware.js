@@ -70,6 +70,37 @@ class Upload {
     req.images = resources[1];
     return next();
   }
+
+  static async changeAvatar(req, res, next) {
+    try {
+      if (req.file) {
+        const image = await cloudinary.uploader.upload(req.file.path, {
+          resource_type: "image",
+          folder: "images",
+        });
+
+        req.avatar = {
+          public_id: image.public_id,
+          url: image.secure_url,
+        };
+      }
+
+      return next();
+    } catch (e) {
+      return next(e);
+    }
+  }
+
+  static async deleteAvatar(err, req, res, next) {
+    try {
+      if (err && req.avatar) {
+        await cloudinary.uploader.destroy(req.avatar.public_id);
+      }
+      return next(err);
+    } catch (error) {
+      return next(error);
+    }
+  }
 }
 
 module.exports = Upload;

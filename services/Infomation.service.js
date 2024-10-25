@@ -1,6 +1,8 @@
 const { Account } = require("../models");
 const { ErrorResponse } = require("../core/reponseHandle");
 const { default: mongoose } = require("mongoose");
+const cloudinary = require("../config/cloudinary");
+
 const {
   ENUM_INFORMATION,
   BASIC_INFORMATION,
@@ -46,7 +48,7 @@ class InfomationService {
   }
 
   async getInfomation({ user_id, user_id_view }) {
-    if(!user_id_view) user_id_view = user_id;
+    if (!user_id_view) user_id_view = user_id;
     const result = await Account.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(user_id_view) } },
 
@@ -214,7 +216,7 @@ class InfomationService {
   }
 
   async getInfomationList({ user_id, user_id_view }) {
-    if(!user_id_view) user_id_view = user_id;
+    if (!user_id_view) user_id_view = user_id;
     const result = await Account.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(user_id_view) } },
       {
@@ -298,6 +300,33 @@ class InfomationService {
       result[0].avatar?.url ||
       "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg";
     return { avatar, basicInformation, otherInformation };
+  }
+
+  async changeNameAvatar({ user_id, first_name, last_name, avatar }) {
+    const user = await Account.findOne({ _id: user_id });
+    if (!user)
+      throw new ErrorResponse({
+        message: "User not found",
+        code: 400,
+      });
+
+    if (first_name) user.first_name = first_name;
+    if (last_name) user.last_name = last_name;
+    if (avatar) {
+      if (user.avatar?.public_id) {
+        await cloudinary.uploader.destroy(user.avatar.public_id);
+      }
+      user.avatar = {
+        url: avatar.url,
+        public_id: avatar.public_id,
+      };
+    }
+
+    const result = await user.save();
+    return {
+      avatar: result.avatar.url,
+      fullname: `${result.last_name} ${result.first_name}`,
+    };
   }
 }
 

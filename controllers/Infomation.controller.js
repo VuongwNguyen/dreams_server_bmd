@@ -18,7 +18,10 @@ class InfomationController {
   async getInfomation(req, res, next) {
     const { user_id } = req.user;
     const { user_id_view } = req.query;
-    const result = await InfomationService.getInfomation({ user_id, user_id_view });
+    const result = await InfomationService.getInfomation({
+      user_id,
+      user_id_view,
+    });
     return new SuccessfullyReponse({
       data: result,
       message: "Get infomation successfully",
@@ -28,7 +31,10 @@ class InfomationController {
   async getInfomationList(req, res, next) {
     const { user_id } = req.user;
     const { user_id_view } = req.query;
-    const result = await InfomationService.getInfomationList({ user_id, user_id_view });
+    const result = await InfomationService.getInfomationList({
+      user_id,
+      user_id_view,
+    });
     return new SuccessfullyReponse({
       data: result,
       message: "Get infomation list successfully",
@@ -37,10 +43,28 @@ class InfomationController {
 
   async getInfomationBySelfSetting(req, res, next) {
     const { user_id } = req.user;
-    const result = await InfomationService.getInfomationBySelfSetting({ user_id });
+    const result = await InfomationService.getInfomationBySelfSetting({
+      user_id,
+    });
     return new SuccessfullyReponse({
       data: result,
       message: "Get infomation by self setting successfully",
+    }).json(res);
+  }
+
+  async changeNameAvatar(req, res, next) {
+    const { user_id } = req.user;
+    const { avatar } = req;
+    const { first_name, last_name } = req.body;
+    const result = await InfomationService.changeNameAvatar({
+      user_id,
+      first_name,
+      last_name,
+      avatar,
+    });
+    return new SuccessfullyReponse({
+      data: result,
+      message: "Change avatar successfully",
     }).json(res);
   }
 }

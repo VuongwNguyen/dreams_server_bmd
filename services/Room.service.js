@@ -4,6 +4,8 @@ const ObjectId = mongoose.Types.ObjectId;
 
 class RoomService {
   async createDirectRoom({ members = [] }) {
+    members = members.sort();
+
     const room = await Room.create({
       members: members.map((mem) => ({
         account_id: mem,
@@ -20,10 +22,6 @@ class RoomService {
     const room = await Room.findOne({
       "members.account_id": sortedMembers,
     }).lean();
-
-    if (!room) {
-      return await this.createDirectRoom({ members: sortedMembers });
-    }
 
     return room;
   }

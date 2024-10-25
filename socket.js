@@ -20,6 +20,7 @@ var server = http.createServer(app);
 
 const { Server } = require("socket.io");
 const RoomService = require("./services/Room.service");
+const MessageService = require("./services/Message.service");
 
 const io = new Server(server);
 
@@ -51,44 +52,138 @@ io.on("connection", (socket) => {
     socket.emit("test");
   });
 
-  socket.on("join-room", () => {});
+  socket.on("join-room", (roomId) => {
+    socket.join(roomId);
+  });
 
-  socket.on("leave-room", () => {});
+  socket.on("leave-room", (roomId) => {
+    socket.leave(roomId);
+  });
 
-  socket.on("message", async (mess, participant, roomId) => {
-    console.log("incomming mess: ", mess, "participant: ", participant);
+  /**
+   * @param mess: [Object] { images, replied_id, content }
+   */
 
-    const author = await User.findOne({
-      _id: usersOnline[socket.id].user_id,
-    }).lean();
+  socket.on("direct-message", async (mess, participant) => {
+    try {
+      let room;
 
-    // get direct room
-    if (participant && !roomId) {
-      try {
-        const room = await RoomService.getDirectRoom({
-          members: [socket.user.user_id, participant],
+      room = await RoomService.getDirectRoom({
+        members: [usersOnline[socket.id].user_id, participant],
+      });
+
+      if (!room) {
+        room = await RoomService.createDirectRoom({
+          members: [usersOnline[socket.id].user_id, participant],
         });
 
-        const user = Object.values(usersOnline).find(
-          (user) => user.user_id === participant
-        );
-
-        console.log(`user ${usersOnline[user.socket_id]}: `, user.socket_id);
-
-        io.to([user?.socket_id, socket.id]).emit(
-          "new-room",
-          room._id,
-          mess,
-          `${author.first_name} ${author.last_name}`
-        );
-
-        return;
-      } catch (e) {
-        console.log("message error: ", e);
+        room.isNewRoom = true;
       }
-    }
 
-    io.to(roomId).emit("message", mess);
+      const message = await MessageService.createMessage({
+        message: mess.content,
+        replied_id: mess.replied_id,
+        images: mess.images,
+        author: usersOnline[socket.id].user_id,
+        room_id: room._id,
+      });
+
+      io.to(room._id.toString()).emit("message", message);
+
+      if (room.isNewRoom) {
+        const user = Object.values(usersOnline).find(
+          (us) => us.user_id === participant
+        );
+        io.to([user.socket_id, socket.id]).emit("new-room", room, message);
+      }
+
+      const onlines = await io.in(room._id.toString()).fetchSockets();
+
+      const onlineUserIds = new Set(
+        onlines.map((online) => usersOnline[online.id]?.user_id)
+      );
+
+      const offlines = [];
+      const onlinesButNotInRoom = [];
+
+      [usersOnline[socket.id].user_id, participant].forEach((userId) => {
+        const isInRoom = onlineUserIds.has(userId.toString());
+
+        if (!isInRoom) {
+          const userOnline = Object.values(usersOnline).find(
+            (user) => user.user_id === userId.toString()
+          );
+
+          if (!userOnline) {
+            offlines.push(userId);
+          } else {
+            onlinesButNotInRoom.push(userOnline.socket_id);
+          }
+        }
+
+        // handle push notification
+
+        // emit event
+      });
+    } catch (e) {
+      console.log("error message: ", e);
+    }
+  });
+
+  socket.on("group-message", async (mess, roomId) => {
+    try {
+      const room = await Room.findOne({ _id: roomId }).lean();
+
+      if (!room) {
+        throw new Error("Room not found");
+      }
+
+      const message = await MessageService.createMessage({
+        message: mess.content,
+        replied_id: mess.replied_id,
+        images: mess.images,
+        author: usersOnline[socket.id].user_id,
+        room_id: roomId,
+      });
+
+      io.to(roomId).emit("message", message);
+
+      // fetch all socket instance in room
+      const onlines = await io.in(roomId).fetchSockets();
+
+      // array of user
+      const offlines = [];
+
+      // array of socket id
+      const onlinesButNotInRoom = [];
+
+      const onlineUserIds = new Set(
+        onlines.map((online) => usersOnline[online.id]?.user_id)
+      );
+
+      room.members.forEach((member) => {
+        const memberUserId = member.account_id.toString();
+
+        if (!onlineUserIds.has(memberUserId)) {
+          const userOnline = Object.values(usersOnline).find(
+            (user) => user.user_id === memberUserId
+          );
+
+          if (!userOnline) {
+            offlines.push(memberUserId);
+          } else {
+            onlineUserIds.push(userOnline.socket_id);
+          }
+        }
+      });
+
+      // handle push notification with offlines
+
+      // emit event to update list room with onlineButNotInRoom
+      io.to(onlinesButNotInRoom).emit("update-room-list", roomId, message);
+    } catch (e) {
+      console.log("message group: ", e);
+    }
   });
 
   socket.on("mock", async () => {
@@ -118,5 +213,5 @@ module.exports = {
   app,
   server,
   io,
-  firebase: admin,
+  usersOnline,
 };

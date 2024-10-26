@@ -29,7 +29,13 @@ class RoomService {
       ? room.members[1].fullname
       : room.members[0].fullname;
 
-    return room;
+    return {
+      ...room,
+      createdAt: undefined,
+      updatedAt: undefined,
+      __v: undefined,
+      host: undefined,
+    };
   }
 
   async getDirectRoom({ members = [], user_id }) {
@@ -44,7 +50,6 @@ class RoomService {
 
     await room.populate("members.account_id", "first_name last_name avatar");
 
-    console.log(room, sortedMembers);
     room = room.toObject();
 
     room.members = room.members.map((mem) => {
@@ -60,7 +65,13 @@ class RoomService {
       ? room.members[1].fullname
       : room.members[0].fullname;
 
-    return room;
+    return {
+      ...room,
+      createdAt: undefined,
+      updatedAt: undefined,
+      __v: undefined,
+      host: undefined,
+    };
   }
 
   async createGroup({ host, members = [], name }) {
@@ -80,6 +91,10 @@ class RoomService {
     _page = parseInt(_page);
     _limit = parseInt(_limit);
 
+    const total = await Room.countDocuments({
+      "members.account_id": { $in: [new ObjectId(user_id)] },
+    });
+
     try {
       const rooms = await Room.aggregate([
         {
@@ -90,8 +105,8 @@ class RoomService {
         {
           $lookup: {
             from: "messages",
-            localField: "members.account_id",
-            foreignField: "author",
+            localField: "_id",
+            foreignField: "room_id",
             as: "messages",
             pipeline: [
               {
@@ -163,8 +178,15 @@ class RoomService {
           $limit: _limit,
         },
         {
-          $sort: {
-            "messages.createdAt": -1,
+          $addFields: {
+            mess: {
+              $sortArray: {
+                input: "$messages",
+                sortBy: {
+                  send_at: -1,
+                },
+              },
+            },
           },
         },
         {
@@ -196,13 +218,22 @@ class RoomService {
             "members.isMe": 1,
             "members._id": 1,
             message: {
-              $arrayElemAt: ["$messages", 0],
+              $arrayElemAt: ["$mess", 0],
             },
           },
         },
       ]);
 
-      return rooms;
+      return {
+        list: rooms,
+        page: {
+          max: Math.ceil(total / _limit),
+          current: _page,
+          next: rooms.length === _limit,
+          prev: _page > 1,
+          limit: _limit,
+        },
+      };
     } catch (e) {
       e.code = 500;
       throw e;

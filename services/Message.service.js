@@ -49,111 +49,126 @@ class MessageService {
   }
 
   async getMessages({ room_id, _page = 1, _limit = 20, user_id }) {
-    _page = parseInt(_page);
-    _limit = parseInt(_limit);
-    const room = await Room.findOne({ _id: room_id }).lean();
+    try {
+      _page = parseInt(_page);
+      _limit = parseInt(_limit);
+      console.log(_page, _limit);
+      const room = await Room.findOne({ _id: room_id }).lean();
 
-    if (!room) {
-      throw new ErrorResponse({ message: "room not found", code: 400 });
-    }
+      if (!room) {
+        throw new ErrorResponse({ message: "room not found", code: 400 });
+      }
 
-    const total = await Message.countDocuments({ room_id: room_id });
-    const skip = (_page - 1) * _limit;
-    const messages = await Message.aggregate([
-      {
-        $match: {
-          room_id: new ObjectId(room_id),
-        },
-      },
-      {
-        $lookup: {
-          from: "accounts",
-          localField: "author",
-          foreignField: "_id",
-          as: "author",
-        },
-      },
-      {
-        $unwind: "$author",
-      },
-      {
-        $lookup: {
-          from: "messages",
-          localField: "replied_id",
-          foreignField: "_id",
-          as: "replied_id",
-          pipeline: [
-            {
-              $lookup: {
-                from: "accounts",
-                localField: "author",
-                foreignField: "_id",
-                as: "author",
-              },
-            },
-            {
-              $unwind: "$author",
-            },
-          ],
-        },
-      },
-      {
-        $unwind: "$replied_id",
-      },
-      {
-        $sort: {
-          createdAt: -1,
-        },
-      },
-      {
-        $skip: skip,
-      },
-      {
-        $limit: _limit,
-      },
-      {
-        $project: {
-          author: {
-            _id: "$author._id",
-            fullname: {
-              $concat: ["$author.first_name", " ", "$author.last_name"],
-            },
-            avatar: "$author.avatar.url",
+      const total = await Message.countDocuments({ room_id: room_id });
+      const skip = (_page - 1) * _limit;
+      const messages = await Message.aggregate([
+        {
+          $match: {
+            room_id: new ObjectId(room_id),
           },
-          room_id: 1,
-          replied: {
-            _id: "$replied_id._id",
+        },
+        {
+          $lookup: {
+            from: "accounts",
+            localField: "author",
+            foreignField: "_id",
+            as: "author",
+          },
+        },
+        {
+          $unwind: "$author",
+        },
+        {
+          $lookup: {
+            from: "messages",
+            localField: "replied_id",
+            foreignField: "_id",
+            as: "replied_id",
+            pipeline: [
+              {
+                $lookup: {
+                  from: "accounts",
+                  localField: "author",
+                  foreignField: "_id",
+                  as: "author",
+                },
+              },
+              {
+                $unwind: "$author",
+              },
+              {
+                $project: {
+                  _id: "$_id",
+                  author: {
+                    _id: "$author._id",
+                    fullname: {
+                      $concat: ["$author.first_name", " ", "$author.last_name"],
+                    },
+                  },
+                  content: "$content",
+                  images: "$images",
+                  send_at: "$send_at",
+                },
+              },
+              {
+                $unwind: "$author",
+              },
+            ],
+          },
+        },
+        {
+          $unwind: {
+            path: "$replied_id",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $skip: skip,
+        },
+        {
+          $limit: _limit,
+        },
+        {
+          $sort: {
+            send_at: -1,
+          },
+        },
+        {
+          $project: {
             author: {
-              _id: "$replied_id.author._id",
+              _id: "$author._id",
               fullname: {
-                $concat: [
-                  "$replied_id.author.first_name",
-                  " ",
-                  "$replied_id.author.last_name",
-                ],
+                $concat: ["$author.first_name", " ", "$author.last_name"],
               },
+              avatar: "$author.avatar.url",
             },
-            content: "$replied_id.content",
-            images: "$replied_id.images",
-            send_at: "$replied_id.send_at",
+            room_id: 1,
+            replied: {
+              $ifNull: ["$replied_id", null],
+            },
+            content: 1,
+            images: 1,
+            send_at: 1,
+            isMe: { $eq: ["$author._id", new ObjectId(user_id)] },
           },
-          content: 1,
-          images: 1,
-          send_at: 1,
         },
-      },
-    ]);
+      ]);
 
-    return {
-      list: messages,
-      page: {
-        max: Math.ceil(total / _limit),
-        current: _page,
-        limit: _limit,
-        next: messages.length === _limit,
-        prev: _page > 1,
-      },
-    };
+      return {
+        list: messages,
+        page: {
+          max: Math.ceil(total / _limit),
+          current: _page,
+          limit: _limit,
+          next: messages.length === _limit,
+          prev: _page > 1,
+        },
+      };
+    } catch (e) {
+      console.log(e);
+      e.code = 500;
+      throw e;
+    }
   }
 }
 

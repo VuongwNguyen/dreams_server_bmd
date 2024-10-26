@@ -58,7 +58,16 @@ io.on("connection", (socket) => {
   });
 
   socket.on("leave-room", (roomId) => {
+    console.log("leave-room", roomId);
     socket.leave(roomId);
+  });
+
+  socket.on("get-user-status", (user_id) => {
+    const status = Object.values(usersOnline).some(
+      (user) => user.user_id === user_id
+    );
+    console.log("user status", status);
+    socket.emit("participant-status", status);
   });
 
   /**
@@ -66,6 +75,7 @@ io.on("connection", (socket) => {
    */
 
   socket.on("message", async (mess, roomId) => {
+    console.log("incomming chat");
     try {
       const room = await Room.findOne({ _id: roomId }).lean();
 

@@ -6,5 +6,7 @@ const router = express.Router();
 
 router.use(verifyUser);
 router.post("/", asyncHandler(RoomController.createGroup));
+router.post("/get-room", asyncHandler(RoomController.getRoom));
+router.get("/", asyncHandler(RoomController.getRooms));
 
 module.exports = router;

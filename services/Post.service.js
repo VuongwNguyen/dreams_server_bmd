@@ -30,7 +30,6 @@ class PostService {
     images = [],
     title,
   }) {
-    // throw new Error("Not implemented");
     let user = null;
     let parentPost = null;
 
@@ -219,7 +218,9 @@ class PostService {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$follower", new mongoose.Types.ObjectId(user_id)] },
+                    {
+                      $eq: ["$follower", new mongoose.Types.ObjectId(user_id)],
+                    },
                     { $eq: ["$following", "$following"] },
                   ],
                 },
@@ -409,7 +410,9 @@ class PostService {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$follower", new mongoose.Types.ObjectId(user_id)] },
+                    {
+                      $eq: ["$follower", new mongoose.Types.ObjectId(user_id)],
+                    },
                     { $eq: ["$following", "$following"] },
                   ],
                 },
@@ -599,14 +602,18 @@ class PostService {
         code: 400,
       });
 
+    const privacy_status =
+      user_id === user_id_view ? ["public", "private"] : ["public"];
+
     const posts = await Post.aggregate([
       {
         $match: {
           account_id: new mongoose.Types.ObjectId(user_id_view),
+          privacy_status: { $in: privacy_status },
         },
       },
       {
-        $sort: { view_count: -1, createdAt: -1 },
+        $sort: { createdAt: -1 },
       },
       {
         $skip: (+_page - 1) * +_limit,
@@ -661,7 +668,9 @@ class PostService {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$follower", new mongoose.Types.ObjectId(user_id)] },
+                    {
+                      $eq: ["$follower", new mongoose.Types.ObjectId(user_id)],
+                    },
                     { $eq: ["$following", "$following"] },
                   ],
                 },
@@ -741,12 +750,6 @@ class PostService {
       },
     ]);
 
-    if (!posts || posts.length === 0)
-      throw new ErrorResponse({
-        message: "Post not found",
-        code: 404,
-      });
-
     return {
       list: posts,
       page: {
@@ -813,7 +816,9 @@ class PostService {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$follower", new mongoose.Types.ObjectId(user_id)] },
+                    {
+                      $eq: ["$follower", new mongoose.Types.ObjectId(user_id)],
+                    },
                     { $eq: ["$following", "$following"] },
                   ],
                 },

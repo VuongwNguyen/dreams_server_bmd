@@ -1,6 +1,7 @@
 const router = require("express").Router();
+const { verifyUser } = require("../middlewares/verifyUser");
 
-router.get("/", async (req, res) => {
+router.get("/", verifyUser, async (req, res) => {
   res.json({
     status: true,
     message: "Welcome to the API of Dreams Social Network",

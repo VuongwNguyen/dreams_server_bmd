@@ -1,5 +1,7 @@
 const ReasonModel = require("../models/ReasonModel");
 const ReportModel = require("../models/ReportModel");
+const AccountService = require("./Account.service");
+const PostService = require("./Post.service");
 const { ENUM_TYPE } = require("../utils/constants");
 const { ErrorResponse } = require("../core/reponseHandle");
 
@@ -9,10 +11,21 @@ class ReportService {
     reported_content_id,
     report_type,
     reason,
+    description = "",
   }) {
     const checkType = ENUM_TYPE.includes(report_type);
     if (!checkType) {
-      throw new Error("Invalid report type");
+      throw new ErrorResponse({
+        message: "Invalid report type",
+        code: 400,
+      });
+    }
+
+    if (!reported_user_id || !reported_content_id || !reason) {
+      throw new ErrorResponse({
+        message: "Missing required fields",
+        code: 400,
+      });
     }
 
     const newReport = await ReportModel.create({
@@ -20,10 +33,14 @@ class ReportService {
       reported_content_id,
       report_type,
       reason,
-    }).lean();
+      description,
+    });
 
     if (!newReport) {
-      throw new Error("Failed to create report");
+      throw new ErrorResponse({
+        message: "Report not created",
+        code: 400,
+      });
     }
     return {
       message: "Report created successfully",
@@ -46,22 +63,57 @@ class ReportService {
     };
   }
 
-  async updateReportStatus(report_id, status) {
-    const checkStatus = ["pending", "resolved", "rejected"].includes(status);
+  async judgeTheReport(user_id, report_id, status, date_of_judge = "") {
+    const checkStatus = ["resolved", "rejected"].includes(status);
     if (!checkStatus) {
-      throw new Error("Invalid status");
+      throw new ErrorResponse({
+        message: "Invalid status",
+        code: 400,
+      });
     }
 
-    const report = await ReportModel.findByIdAndUpdate(report_id, {
-      status,
-    }).lean();
+    const report = await ReportModel.findById(report_id);
+    if (!report)
+      throw new ErrorResponse({
+        message: "Report not found",
+        code: 400,
+      });
 
-    if (!report) {
-      throw new Error("Report not found");
+    if (report.status !== "pending")
+      throw new ErrorResponse({
+        message: "Report already resolved",
+        code: 400,
+      });
+
+    const type = report.report_type;
+    const content_id = report.reported_content_id;
+    const reason = report.reason;
+
+    if (type === "post" && status === "resolve") {
+      await PostService.SuspensionOfPosting(content_id, reason);
+      report.status = status;
+    } else if (type === "comment" && status === "resolve") {
+      // to be implemented
+      throw new ErrorResponse({
+        message: "Feature not implemented",
+        code: 400,
+      });
+      report.status = status;
+    } else if (type === "account" && status === "resolve") {
+      await AccountService.suspendUser(content_id, reason, date_of_judge);
+      report.status = status;
+    } else {
+      report.status = status;
     }
+
+    report.judger_id = user_id;
+    report.date_of_judge = new Date();
+
+    await report.save();
 
     return {
-      message: "Report updated successfully",
+      data: report,
+      message: "Report resolved successfully",
     };
   }
 }
@@ -92,7 +144,10 @@ class ReasonService {
   async deleteReason(reason_id) {
     const reason = await ReasonModel.findByIdAndDelete(reason_id);
     if (!reason) {
-      throw new Error("Reason not found");
+      throw new ErrorResponse({
+        message: "Reason not found",
+        code: 400,
+      });
     }
 
     return {

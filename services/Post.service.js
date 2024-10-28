@@ -4,6 +4,7 @@ const _ = require("lodash");
 const { Worker } = require("bullmq");
 const { default: mongoose } = require("mongoose");
 const CommentService = require("./Comment.service");
+const { url } = require("../config/cloudinary");
 
 // const notificationWorker = new Worker(
 //   "notification",
@@ -164,7 +165,7 @@ class PostService {
         },
       },
       {
-        $sort: { view_count: -1, createdAt: -1 },
+        $sort: { createdAt: -1, view_count: -1 },
       },
       {
         $skip: (+_page - 1) * +_limit,
@@ -252,12 +253,7 @@ class PostService {
             fullname: {
               $concat: ["$author.first_name", " ", "$author.last_name"],
             },
-            avatar: {
-              $ifNull: [
-                "$avatar.url",
-                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-              ],
-            },
+            avatar: "$author.avatar.url",
           },
           followedStatus: {
             $cond: {
@@ -278,12 +274,7 @@ class PostService {
           author: {
             _id: 1,
             fullname: 1,
-            avatar: {
-              $ifNull: [
-                "$avatar.url",
-                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-              ],
-            },
+            avatar: 1,
           },
           title: 1,
           content: 1,
@@ -432,12 +423,7 @@ class PostService {
             fullname: {
               $concat: ["$author.first_name", " ", "$author.last_name"],
             },
-            avatar: {
-              $ifNull: [
-                "author.avatar.url",
-                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-              ],
-            },
+            avatar: "author.avatar.url",
           },
           tagUsers: {
             $map: {
@@ -466,12 +452,7 @@ class PostService {
           author: {
             _id: 1,
             fullname: 1,
-            avatar: {
-              $ifNull: [
-                "$avatar.url",
-                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-              ],
-            },
+            avatar: "$avatar.url",
           },
           title: 1,
           content: 1,
@@ -608,7 +589,10 @@ class PostService {
     const posts = await Post.aggregate([
       {
         $match: {
-          account_id: new mongoose.Types.ObjectId(user_id_view),
+          $or: [
+            { account_id: new mongoose.Types.ObjectId(user_id_view) },
+            { tagUsers: { $in: [new mongoose.Types.ObjectId(user_id)] } },
+          ],
           privacy_status: { $in: privacy_status },
         },
       },
@@ -735,12 +719,7 @@ class PostService {
             fullname: {
               $concat: ["$author.first_name", " ", "$author.last_name"],
             },
-            avatar: {
-              $ifNull: [
-                "$avatar.url",
-                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-              ],
-            },
+            avatar: "$author.avatar.url",
           },
           likeCount: 1,
           isLiked: 1,
@@ -749,7 +728,6 @@ class PostService {
         },
       },
     ]);
-
     return {
       list: posts,
       page: {
@@ -865,12 +843,7 @@ class PostService {
           author: {
             _id: 1,
             fullname: 1,
-            avatar: {
-              $ifNull: [
-                "$avatar.url",
-                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-              ],
-            },
+            avatar: "$author.avatar.url",
           },
           title: 1,
           content: 1,

@@ -27,6 +27,17 @@ const ReportSchema = new Schema(
       enum: ["pending", "resolved", "rejected"],
       default: "pending",
     },
+    description: {
+      type: String,
+    },
+    date_of_judge: {
+      type: Date
+    },
+    judger_id: {
+      type: Schema.Types.ObjectId,
+      ref: "Account",
+    },
+
   },
   { timestamps: true }
 );

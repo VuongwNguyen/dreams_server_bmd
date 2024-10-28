@@ -7,17 +7,12 @@ const { verifyAdmin, verifyUser } = require("../middlewares/verifyUser");
 const asyncHandler = require("../core/asyncHandler");
 
 router.use(verifyUser);
-router.post(
-  "/report",
-  verifyAdmin,
-  asyncHandler(reportController.createReport)
-); // admin
-router.get("/reports", asyncHandler(reportController.getReports));
+router.post("/report", asyncHandler(reportController.createReport));
+router.get("/reports", verifyAdmin, asyncHandler(reportController.getReports)); // admin
 router.put(
   "/report",
-  verifyUser,
   verifyAdmin,
-  asyncHandler(reportController.updateReportStatus)
+  asyncHandler(reportController.judgeTheReport)
 ); // admin
 
 router.post(

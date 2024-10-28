@@ -191,12 +191,7 @@ class InfomationService {
         $project: {
           _id: 1,
           fullname: { $concat: ["$last_name", " ", "$first_name"] },
-          avatar: {
-            $ifNull: [
-              "$avatar.url",
-              "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-            ],
-          },
+          avatar: "$avatar.url",
           followingCount: 1,
           followerCount: 1,
           postCount: 1,
@@ -296,9 +291,7 @@ class InfomationService {
       value: result[0].fullname,
     });
 
-    const avatar =
-      result[0].avatar?.url ||
-      "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg";
+    const avatar = result[0].avatar?.url;
     return { avatar, basicInformation, otherInformation };
   }
 

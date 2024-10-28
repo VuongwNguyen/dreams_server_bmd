@@ -66,6 +66,12 @@ const PostSchema = new Schema(
       type: [{ type: Schema.Types.ObjectId, ref: "Account" }],
       default: [],
     },
+    violateion: {
+      type: {
+        reason: { type: String, default: "" },
+        date: { type: Date, default: null },
+      },
+    },
   },
   {
     timestamps: true,

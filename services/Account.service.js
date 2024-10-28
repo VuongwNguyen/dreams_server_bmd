@@ -256,13 +256,11 @@ class AccountService {
   async getNameAvatarUser(user_id) {
     const user = await Account.findOne({ _id: user_id }).lean();
 
-    user.full_name = `${user.first_name} ${user.last_name}`;
-    user.avatar =
-      user.avatar.url ||
-      "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg";
+    user.fullname = `${user.first_name} ${user.last_name}`;
+    user.avatar = user.avatar.url;
 
     return {
-      full_name: user.full_name,
+      fullname: user.fullname,
       avatar: user.avatar,
     };
   }

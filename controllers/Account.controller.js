@@ -106,6 +106,16 @@ class AccountController {
       code: 200,
     }).json(res);
   }
+
+  async updateFcm(req, res) {
+    const { user_id } = req.user;
+    const { token } = req.body;
+
+    await AccountService.updateFcmToken({ user_id, token });
+    new SuccessfullyReponse({
+      message: "update fcm token success",
+    }).json(res);
+  }
 }
 
 module.exports = new AccountController();

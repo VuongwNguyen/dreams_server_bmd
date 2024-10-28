@@ -79,7 +79,9 @@ class RoomService {
 
     const room = await Room.create({
       is_group: true,
-      members: mems,
+      members: mems.map((mem) => {
+        return { account_id: mem };
+      }),
       host: host,
       name,
     });
@@ -168,7 +170,10 @@ class RoomService {
         },
         {
           $match: {
-            messages: { $gte: [{ $size: "$mesages" }, 0] },
+            $or: [
+              { messages: { $gte: [{ $size: "$mesages" }, 0] } },
+              { is_group: true },
+            ],
           },
         },
         {

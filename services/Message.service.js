@@ -16,7 +16,7 @@ class MessageService {
 
     await mess.populate("author", "first_name last_name avatar.url");
     if (replied_id) {
-      await mess.populate("replied_id", "images author content");
+      await mess.populate("replied_id", "images author content send_at");
       await mess.populate("replied_id.author", "first_name last_name");
     }
 
@@ -28,6 +28,8 @@ class MessageService {
           _id: mess.replied_id.author._id,
           fullname: `${mess.replied_id.author.first_name} ${mess.replied_id.author.last_name}`,
         },
+        _id: mess.replied_id._id,
+        send_at: mess.replied_id.send_at,
         content: mess.replied_id.content,
         images: mess.replied_id.images,
       };
@@ -48,11 +50,11 @@ class MessageService {
     };
   }
 
-  async getMessages({ room_id, _page = 1, _limit = 20, user_id }) {
+  async getMessages({ room_id, _page = 1, _limit = 20, user_id, _offset = 0 }) {
     try {
       _page = parseInt(_page);
       _limit = parseInt(_limit);
-      console.log(_page, _limit);
+      _offset = parseInt(_offset);
       const room = await Room.findOne({ _id: room_id }).lean();
 
       if (!room) {
@@ -60,7 +62,7 @@ class MessageService {
       }
 
       const total = await Message.countDocuments({ room_id: room_id });
-      const skip = (_page - 1) * _limit;
+      const skip = (_page - 1) * _limit + _offset;
       const messages = await Message.aggregate([
         {
           $match: {
@@ -123,15 +125,15 @@ class MessageService {
           },
         },
         {
+          $sort: {
+            send_at: -1,
+          },
+        },
+        {
           $skip: skip,
         },
         {
           $limit: _limit,
-        },
-        {
-          $sort: {
-            send_at: -1,
-          },
         },
         {
           $project: {

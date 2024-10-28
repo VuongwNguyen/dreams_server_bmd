@@ -266,6 +266,17 @@ class AccountService {
       avatar: user.avatar,
     };
   }
+
+  async updateFcmToken({ user_id, token }) {
+    const user = await Account.findOne({ _id: user_id });
+
+    if (!user) {
+      throw new ErrorResponse({ message: "User not found", code: 400 });
+    }
+
+    user.fcm_token = token;
+    await user.save();
+  }
 }
 
 module.exports = new AccountService();

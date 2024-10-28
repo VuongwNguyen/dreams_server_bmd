@@ -20,7 +20,7 @@ class MessageController {
 
   async getMessages(req, res, next) {
     const user_id = req.user.user_id;
-    const { _page, _limit, room_id } = req.query;
+    const { _page, _limit, room_id, _offset } = req.query;
 
     new SuccessfullyReponse({
       message: "get messages success",
@@ -29,6 +29,7 @@ class MessageController {
         room_id,
         _page,
         _limit,
+        _offset,
       }),
     }).json(res);
   }

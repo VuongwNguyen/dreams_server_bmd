@@ -27,11 +27,6 @@ const AccountSchema = new Schema(
       type: String,
       required: false,
     },
-    isActivated: {
-      type: Boolean,
-      required: false,
-      default: false,
-    },
     isVerified: {
       type: Boolean,
       required: false,
@@ -45,11 +40,28 @@ const AccountSchema = new Schema(
     },
     avatar: {
       type: {
-        url: { type: String, required: true },
-        public_id: { type: String, required: true },
+        url: {
+          type: String,
+          required: true,
+          default:
+            "https://res.cloudinary.com/dv2vrpiih/image/upload/v1730125815/images/zck5jnecayfut9j9v03z.jpg",
+        },
+        public_id: {
+          type: String,
+          required: true,
+          default: "images/zck5jnecayfut9j9v03z",
+        },
       },
       required: false,
     },
+    isJudged: {
+      type: {
+        judgeDate: { type: Date, required: false },
+        reason: { type: String, required: false },
+      },
+      default: null,
+    },
+
     post_viewed: [
       {
         type: Schema.Types.ObjectId,

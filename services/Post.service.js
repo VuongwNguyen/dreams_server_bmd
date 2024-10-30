@@ -4,6 +4,8 @@ const _ = require("lodash");
 const { Worker } = require("bullmq");
 const { default: mongoose } = require("mongoose");
 const CommentService = require("./Comment.service");
+const { url } = require("../config/cloudinary");
+const NotificationService = require("./Notification.service");
 
 // const notificationWorker = new Worker(
 //   "notification",
@@ -30,7 +32,6 @@ class PostService {
     images = [],
     title,
   }) {
-    // throw new Error("Not implemented");
     let user = null;
     let parentPost = null;
 
@@ -84,57 +85,33 @@ class PostService {
       title,
     });
 
-    // const tokens = await Follow.aggregate([
-    //   {
-    //     $match: {
-    //       following: user_id,
-    //     },
-    //   },
-    //   {
-    //     $lookup: {
-    //       from: "Account",
-    //       localField: "follower",
-    //       foreignField: "_id",
-    //       pipeline: [
-    //         {
-    //           $match: {
-    //             fcm_token: { $ne: null },
-    //           },
-    //         },
-    //         {
-    //           $project: {
-    //             _id: 1,
-    //             fcm_token: 1,
-    //           },
-    //         },
-    //       ],
-    //       as: "user",
-    //     },
-    //   },
-    //   {
-    //     $unwind: "$user",
-    //   },
-    //   {
-    //     $group: {
-    //       _id: "$following",
-    //       fcm_tokens: {
-    //         $push: "$user.fcm_token",
-    //       },
-    //     },
-    //   },
-    //   {
-    //     $project: {
-    //       _id: 0,
-    //       fcm_tokens: 1,
-    //     },
-    //   },
-    // ]);
+    if (Array.isArray(tagUsers) && tagUsers.length > 0) {
+      await Promise.all(
+        tagUsers.map((tagUser) =>
+          NotificationService.createNotification({
+            sender: user_id,
+            receiver: tagUser,
+            post_id: newPost._id,
+            type: "mention",
+          })
+        )
+      ); // gửi thông báo cho người được tag
+    }
 
-    // const chunks = _.chunk(tokens.tokens, 500);
+    const followers = await Follow.find({ following: user_id }).lean();
 
-    // chunks.forEach(function (chunk) {
-    //   notificationWorker.add({ tokens: chunk });
-    // });
+    if (Array.isArray(followers) && followers.length > 0) {
+      await Promise.all(
+        followers.map((follower) =>
+          NotificationService.createNotification({
+            sender: user_id,
+            receiver: follower.follower,
+            post_id: newPost._id,
+            type: "post",
+          })
+        )
+      ); // gửi thông báo cho người theo dõi
+    }
 
     return newPost;
   }
@@ -147,7 +124,6 @@ class PostService {
 
     const totalRecords = await Post.countDocuments({
       privacy_status: "public",
-      // _id: { $nin: user.post_viewed }, // loại bỏ các bài đã xem
     });
 
     if (!user) {
@@ -156,16 +132,16 @@ class PostService {
         code: 400,
       });
     }
-    //  lấy các bài viết public, không phải của user, không phải bài đã xem, user đang follow
+
+    // Lấy các bài viết public, không phải của user, không phải bài đã xem
     const posts = await Post.aggregate([
       {
         $match: {
           privacy_status: "public",
-          // _id: { $nin: user.post_viewed },
         },
       },
       {
-        $sort: { view_count: -1, createdAt: -1 },
+        $sort: { createdAt: -1, view_count: -1 },
       },
       {
         $skip: (+_page - 1) * +_limit,
@@ -177,7 +153,7 @@ class PostService {
         $lookup: {
           from: "accounts",
           localField: "account_id",
-          foreignField: "_id", // trường nối
+          foreignField: "_id",
           as: "author",
         },
       },
@@ -213,14 +189,17 @@ class PostService {
       {
         $lookup: {
           from: "follows",
-          let: { following: "$account_id" },
+          let: {
+            followerId: new mongoose.Types.ObjectId(user_id),
+            followingId: "$account_id",
+          },
           pipeline: [
             {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$follower", user_id] },
-                    { $eq: ["$following", "$following"] },
+                    { $eq: ["$follower", "$$followerId"] },
+                    { $eq: ["$following", "$$followingId"] },
                   ],
                 },
               },
@@ -232,7 +211,7 @@ class PostService {
       {
         $addFields: {
           likeCount: { $size: "$like" },
-          isLiked: { $in: [user_id, "$like"] }, // Kiểm tra người dùng đã like chưa
+          isLiked: { $in: [new mongoose.Types.ObjectId(user_id), "$like"] },
           commentCount: { $size: "$comments" },
           tagUsers: {
             $map: {
@@ -251,25 +230,16 @@ class PostService {
             fullname: {
               $concat: ["$author.first_name", " ", "$author.last_name"],
             },
-            avatar: {
-              $ifNull: [
-                "$avatar.url",
-                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-              ],
-            },
+            avatar: "$author.avatar.url",
           },
           followedStatus: {
             $cond: {
-              if: { $gt: [{ $size: "$followedStatus" }, 0] },
+              if: { $gt: [{ $size: "$followedStatus" }, 0] }, // Sửa điều kiện so sánh
               then: true,
               else: false,
             },
-          }, // Kiểm tra người dùng đã follow chưa
+          },
         },
-      },
-
-      {
-        $addFields: {},
       },
       {
         $project: {
@@ -277,12 +247,7 @@ class PostService {
           author: {
             _id: 1,
             fullname: 1,
-            avatar: {
-              $ifNull: [
-                "$avatar.url",
-                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-              ],
-            },
+            avatar: 1,
           },
           title: 1,
           content: 1,
@@ -315,11 +280,11 @@ class PostService {
     return {
       list: posts,
       page: {
-        maxPage: Math.ceil(totalRecords / _limit),
-        currentPage: _page,
+        maxPage: Math.ceil(totalRecords / +_limit),
+        currentPage: +_page,
         limit: _limit,
-        hasNext: posts.length === _limit,
-        hasPrevious: _page > 1,
+        hasNext: posts.length === +_limit,
+        hasPrevious: +_page > 1,
       },
     };
   }
@@ -410,7 +375,9 @@ class PostService {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$follower", user_id] },
+                    {
+                      $eq: ["$follower", new mongoose.Types.ObjectId(user_id)],
+                    },
                     { $eq: ["$following", "$following"] },
                   ],
                 },
@@ -423,19 +390,14 @@ class PostService {
       {
         $addFields: {
           likeCount: { $size: "$like" },
-          isLiked: { $in: [user_id, "$like"] }, // Kiểm tra người dùng đã like chưa
+          isLiked: { $in: [new mongoose.Types.ObjectId(user_id), "$like"] }, // Kiểm tra người dùng đã like chưa
           commentCount: { $size: "$comments" },
           author: {
             _id: "$author._id",
             fullname: {
               $concat: ["$author.first_name", " ", "$author.last_name"],
             },
-            avatar: {
-              $ifNull: [
-                "author.avatar.url",
-                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-              ],
-            },
+            avatar: "author.avatar.url",
           },
           tagUsers: {
             $map: {
@@ -455,7 +417,7 @@ class PostService {
               then: true,
               else: false,
             },
-          }, // Kiểm tra người dùng đã follow chưa
+          },
         },
       },
       {
@@ -464,12 +426,7 @@ class PostService {
           author: {
             _id: 1,
             fullname: 1,
-            avatar: {
-              $ifNull: [
-                "$avatar.url",
-                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-              ],
-            },
+            avatar: "$avatar.url",
           },
           title: 1,
           content: 1,
@@ -552,7 +509,7 @@ class PostService {
 
   async likePost({ user_id, post_id }) {
     const user = await Account.findOne({ _id: user_id });
-
+    let msg = "";
     if (!user) {
       throw new ErrorResponse({ message: "User not found", code: 401 });
     }
@@ -564,16 +521,21 @@ class PostService {
     }
 
     if (post.like.includes(user_id)) {
-      // nếu đã like rồi thì bỏ like
-      post.like = post.like.filter((id) => id !== user_id); // loại bỏ id user khỏi mảng like
+      await Post.updateOne({ _id: post_id }, { $pull: { like: user_id } });
+      msg = "Unlike success";
     } else {
-      post.like.push(user_id); // thêm id user vào mảng like
+      await Post.updateOne({ _id: post_id }, { $addToSet: { like: user_id } });
+      msg = "Like success";
     }
-    const result = await post.save();
+
+    const result = await Post.findOne({ _id: post_id });
 
     return {
-      currentLike: result.like.length,
-      isLiked: result.like.includes(user_id),
+      message: msg,
+      data: {
+        currentLike: result.like.length,
+        isLiked: result.like.includes(user_id),
+      },
     };
   }
 
@@ -595,14 +557,21 @@ class PostService {
         code: 400,
       });
 
+    const privacy_status =
+      user_id === user_id_view ? ["public", "private"] : ["public"];
+
     const posts = await Post.aggregate([
       {
         $match: {
-          account_id: new mongoose.Types.ObjectId(user_id_view),
+          $or: [
+            { account_id: new mongoose.Types.ObjectId(user_id_view) },
+            { tagUsers: { $in: [new mongoose.Types.ObjectId(user_id)] } },
+          ],
+          privacy_status: { $in: privacy_status },
         },
       },
       {
-        $sort: { view_count: -1, createdAt: -1 },
+        $sort: { createdAt: -1 },
       },
       {
         $skip: (+_page - 1) * +_limit,
@@ -657,7 +626,9 @@ class PostService {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$follower", user_id] },
+                    {
+                      $eq: ["$follower", new mongoose.Types.ObjectId(user_id)],
+                    },
                     { $eq: ["$following", "$following"] },
                   ],
                 },
@@ -670,7 +641,7 @@ class PostService {
       {
         $addFields: {
           likeCount: { $size: "$like" },
-          isLiked: { $in: [user_id, "$like"] }, // Kiểm tra người dùng đã like chưa
+          isLiked: { $in: [new mongoose.Types.ObjectId(user_id), "$like"] }, // Kiểm tra người dùng đã like chưa
           commentCount: { $size: "$comments" },
           tagUsers: {
             $map: {
@@ -722,12 +693,7 @@ class PostService {
             fullname: {
               $concat: ["$author.first_name", " ", "$author.last_name"],
             },
-            avatar: {
-              $ifNull: [
-                "$avatar.url",
-                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-              ],
-            },
+            avatar: "$author.avatar.url",
           },
           likeCount: 1,
           isLiked: 1,
@@ -736,13 +702,6 @@ class PostService {
         },
       },
     ]);
-
-    if (!posts || posts.length === 0)
-      throw new ErrorResponse({
-        message: "Post not found",
-        code: 404,
-      });
-
     return {
       list: posts,
       page: {
@@ -809,7 +768,9 @@ class PostService {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$follower", user_id] },
+                    {
+                      $eq: ["$follower", new mongoose.Types.ObjectId(user_id)],
+                    },
                     { $eq: ["$following", "$following"] },
                   ],
                 },
@@ -822,7 +783,7 @@ class PostService {
       {
         $addFields: {
           likeCount: { $size: "$like" },
-          isLiked: { $in: [user_id, "$like"] }, // Kiểm tra người dùng đã like chưa
+          isLiked: { $in: [new mongoose.Types.ObjectId(user_id), "$like"] }, // Kiểm tra người dùng đã like chưa
           commentCount: { $size: "$comments" },
           author: {
             fullname: {
@@ -856,12 +817,7 @@ class PostService {
           author: {
             _id: 1,
             fullname: 1,
-            avatar: {
-              $ifNull: [
-                "$avatar.url",
-                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-              ],
-            },
+            avatar: "$author.avatar.url",
           },
           title: 1,
           content: 1,
@@ -1036,6 +992,25 @@ class PostService {
         hasNext: posts.length === _limit,
         hasPrevious: _page > 1,
       },
+    };
+  }
+
+  async SuspensionOfPosting({ post_id, reason }) {
+    const post = await Post.findOne({ _id: post_id });
+
+    post.violateion.status = true;
+    post.violateion.reason = reason;
+
+    const suspen = await post.save();
+    if (!suspen) {
+      throw new ErrorResponse({
+        message: "Failed to suspend post",
+        code: 400,
+      });
+    }
+    return {
+      data: suspen,
+      message: "Post has been suspended",
     };
   }
 }

@@ -70,9 +70,9 @@ class AccountService {
       });
 
     // check user is blocked
-    if (user.isActivated)
+    if (user.isJudged?.judgeDate > Date.now())
       throw new ErrorResponse({
-        message: "User is blocked",
+        message: "User has been suspended",
         code: 403,
       });
 
@@ -217,13 +217,14 @@ class AccountService {
         await keystoreService.removeKeyStore(user._id);
         throw new ErrorResponse({
           message: "Something went wrong, please login",
+          code: 401,
         });
       }
 
       if (!user) {
         throw new ErrorResponse({
           message: "User not found",
-          code: 400,
+          code: 401,
         });
       }
 
@@ -241,17 +242,10 @@ class AccountService {
 
       return tokens;
     } catch (error) {
-      if (
-        error.message === "jwt expired" ||
-        error.message === "invalid signature"
-      ) {
-        throw new ErrorResponse({
-          message: "Something went wrong, please login",
-          code: 403,
-        });
-      }
-
-      throw error;
+      throw new ErrorResponse({
+        message: "Something went wrong, please login",
+        code: 401,
+      });
     }
   }
 
@@ -262,13 +256,27 @@ class AccountService {
   async getNameAvatarUser(user_id) {
     const user = await Account.findOne({ _id: user_id }).lean();
 
-    user.full_name = `${user.first_name} ${user.last_name}`;
-    user.avatar = user.avatar || "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg";
+    user.fullname = `${user.first_name} ${user.last_name}`;
+    user.avatar = user.avatar.url;
 
     return {
-      full_name: user.full_name,
+      fullname: user.fullname,
       avatar: user.avatar,
     };
+  }
+
+  async suspendUser({ user_id, reason, days }) {
+    const user = await Account.findOne({ _id: user_id });
+
+    user.isJudged = {
+      judgeDate:
+        days?.length > 0 ? Date.now() + days * 24 * 60 * 60 * 1000 : null,
+      reason,
+    };
+
+    await user.save();
+
+    return true;
   }
 }
 

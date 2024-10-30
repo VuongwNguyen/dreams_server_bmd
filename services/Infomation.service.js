@@ -1,6 +1,8 @@
 const { Account } = require("../models");
 const { ErrorResponse } = require("../core/reponseHandle");
 const { default: mongoose } = require("mongoose");
+const cloudinary = require("../config/cloudinary");
+
 const {
   ENUM_INFORMATION,
   BASIC_INFORMATION,
@@ -46,11 +48,10 @@ class InfomationService {
   }
 
   async getInfomation({ user_id, user_id_view }) {
-    if(!user_id_view) user_id_view = user_id;
+    if (!user_id_view) user_id_view = user_id;
+
     const result = await Account.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(user_id_view) } },
-
-      // Add nickname và description dựa trên key trong infomation
       {
         $addFields: {
           description: {
@@ -59,10 +60,10 @@ class InfomationService {
                 $filter: {
                   input: "$infomation",
                   as: "info",
-                  cond: { $eq: ["$$info.key", "des"] }, // Lọc các phần tử có key là "des"
+                  cond: { $eq: ["$$info.key", "des"] },
                 },
               },
-              0, // Lấy phần tử đầu tiên trong mảng đã lọc
+              0,
             ],
           },
           nickname: {
@@ -79,8 +80,6 @@ class InfomationService {
           },
         },
       },
-
-      // Lookup follows collection để kiểm tra quan hệ follower/following
       {
         $lookup: {
           from: "follows",
@@ -88,7 +87,7 @@ class InfomationService {
             {
               $match: {
                 $or: [
-                  { follower: new mongoose.Types.ObjectId(user_id) },
+                  { follower: new mongoose.Types.ObjectId(user_id_view) },
                   { following: new mongoose.Types.ObjectId(user_id_view) },
                 ],
               },
@@ -97,8 +96,6 @@ class InfomationService {
           as: "follows",
         },
       },
-
-      // Add fields: isFollowed, followingCount và followerCount
       {
         $addFields: {
           isFollowed: {
@@ -128,7 +125,7 @@ class InfomationService {
                 },
               },
               0,
-            ], // Nếu có ít nhất 1 bản ghi, isFollowed sẽ là true
+            ],
           },
           followingCount: {
             $size: {
@@ -138,7 +135,7 @@ class InfomationService {
                 cond: {
                   $eq: [
                     "$$follow.follower",
-                    new mongoose.Types.ObjectId(user_id_view),
+                    new mongoose.Types.ObjectId(user_id_view), // Đếm số người mà user_id_view đang theo dõi
                   ],
                 },
               },
@@ -160,8 +157,6 @@ class InfomationService {
           },
         },
       },
-
-      // Lookup posts collection để đếm số lượng bài viết
       {
         $lookup: {
           from: "posts",
@@ -176,25 +171,16 @@ class InfomationService {
           as: "posts",
         },
       },
-
-      // Add postCount
       {
         $addFields: {
           postCount: { $size: "$posts" },
         },
       },
-
-      // Project các trường cần thiết
       {
         $project: {
           _id: 1,
           fullname: { $concat: ["$last_name", " ", "$first_name"] },
-          avatar: {
-            $ifNull: [
-              "$avatar.url",
-              "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-            ],
-          },
+          avatar: "$avatar.url",
           followingCount: 1,
           followerCount: 1,
           postCount: 1,
@@ -214,7 +200,7 @@ class InfomationService {
   }
 
   async getInfomationList({ user_id, user_id_view }) {
-    if(!user_id_view) user_id_view = user_id;
+    if (!user_id_view) user_id_view = user_id;
     const result = await Account.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(user_id_view) } },
       {
@@ -294,10 +280,35 @@ class InfomationService {
       value: result[0].fullname,
     });
 
-    const avatar =
-      result[0].avatar?.url ||
-      "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg";
+    const avatar = result[0].avatar?.url;
     return { avatar, basicInformation, otherInformation };
+  }
+
+  async changeNameAvatar({ user_id, first_name, last_name, avatar }) {
+    const user = await Account.findOne({ _id: user_id });
+    if (!user)
+      throw new ErrorResponse({
+        message: "User not found",
+        code: 400,
+      });
+
+    if (first_name) user.first_name = first_name;
+    if (last_name) user.last_name = last_name;
+    if (avatar) {
+      if (user.avatar?.public_id) {
+        await cloudinary.uploader.destroy(user.avatar.public_id);
+      }
+      user.avatar = {
+        url: avatar.url,
+        public_id: avatar.public_id,
+      };
+    }
+
+    const result = await user.save();
+    return {
+      avatar: result.avatar.url,
+      fullname: `${result.last_name} ${result.first_name}`,
+    };
   }
 }
 

@@ -1,6 +1,7 @@
 const { ErrorResponse } = require("../core/reponseHandle");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const { Account } = require("../models");
 
 const verifyUser = (req, res, next) => {
   const token = req?.headers?.authorization?.split(" ")[1];
@@ -14,6 +15,7 @@ const verifyUser = (req, res, next) => {
 
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decode) => {
     if (err) {
+      err.code = 401;
       return next(err);
     }
 

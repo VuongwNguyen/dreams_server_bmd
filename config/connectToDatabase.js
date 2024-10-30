@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 mongoose.set("strictQuery", true);
 
 const DBName = "DreamsBase";
-const uri = process.env.MONGODB_URI || `mongodb://localhost:27017/${DBName}`;
+const uri = process.env.MONGODB_URI || `mongodb+srv://dreamsappbmd:URQijjGVsbK07IXV@cluster0.34yig.mongodb.net/${DBName}`;
 const options = {
   useUnifiedTopology: true,
 };

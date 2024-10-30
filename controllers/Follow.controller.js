@@ -12,17 +12,17 @@ class FollowController {
     });
 
     return new SuccessfullyReponse({
-      data: result.data,
       message: result.message,
     }).json(res);
   }
 
   async getFollowings(req, res) {
     const { user_id } = req.user;
-    const { _page, _limit } = req.query;
+    const { user_id_view, _page, _limit } = req.query;
 
     const followings = await FollowService.getFollowings({
       user_id,
+      user_id_view,
       _page,
       _limit,
     });
@@ -35,9 +35,10 @@ class FollowController {
 
   async getFollowers(req, res) {
     const { user_id } = req.user;
-    const { _page, _limit } = req.query;
+    const { user_id_view, _page, _limit } = req.query;
     const followers = await FollowService.getFollowers({
       user_id,
+      user_id_view,
       _page,
       _limit,
     });

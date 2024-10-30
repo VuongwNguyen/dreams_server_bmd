@@ -49,6 +49,7 @@ class InfomationService {
 
   async getInfomation({ user_id, user_id_view }) {
     if (!user_id_view) user_id_view = user_id;
+
     const result = await Account.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(user_id_view) } },
       {
@@ -59,10 +60,10 @@ class InfomationService {
                 $filter: {
                   input: "$infomation",
                   as: "info",
-                  cond: { $eq: ["$$info.key", "des"] }, // Lọc các phần tử có key là "des"
+                  cond: { $eq: ["$$info.key", "des"] },
                 },
               },
-              0, // Lấy phần tử đầu tiên trong mảng đã lọc
+              0,
             ],
           },
           nickname: {
@@ -79,8 +80,6 @@ class InfomationService {
           },
         },
       },
-
-      // Lookup follows collection để kiểm tra quan hệ follower/following
       {
         $lookup: {
           from: "follows",
@@ -88,7 +87,7 @@ class InfomationService {
             {
               $match: {
                 $or: [
-                  { follower: new mongoose.Types.ObjectId(user_id) },
+                  { follower: new mongoose.Types.ObjectId(user_id_view) },
                   { following: new mongoose.Types.ObjectId(user_id_view) },
                 ],
               },
@@ -97,8 +96,6 @@ class InfomationService {
           as: "follows",
         },
       },
-
-      // Add fields: isFollowed, followingCount và followerCount
       {
         $addFields: {
           isFollowed: {
@@ -128,7 +125,7 @@ class InfomationService {
                 },
               },
               0,
-            ], // Nếu có ít nhất 1 bản ghi, isFollowed sẽ là true
+            ],
           },
           followingCount: {
             $size: {
@@ -138,7 +135,7 @@ class InfomationService {
                 cond: {
                   $eq: [
                     "$$follow.follower",
-                    new mongoose.Types.ObjectId(user_id_view),
+                    new mongoose.Types.ObjectId(user_id_view), // Đếm số người mà user_id_view đang theo dõi
                   ],
                 },
               },
@@ -160,8 +157,6 @@ class InfomationService {
           },
         },
       },
-
-      // Lookup posts collection để đếm số lượng bài viết
       {
         $lookup: {
           from: "posts",
@@ -176,15 +171,11 @@ class InfomationService {
           as: "posts",
         },
       },
-
-      // Add postCount
       {
         $addFields: {
           postCount: { $size: "$posts" },
         },
       },
-
-      // Project các trường cần thiết
       {
         $project: {
           _id: 1,
@@ -319,7 +310,6 @@ class InfomationService {
       fullname: `${result.last_name} ${result.first_name}`,
     };
   }
-
 }
 
 module.exports = new InfomationService();

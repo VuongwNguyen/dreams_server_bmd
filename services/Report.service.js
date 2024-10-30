@@ -27,7 +27,7 @@ class ReportService {
       });
     }
 
-    const newReport = await ReportModel.create({
+    const newReport = await Report.create({
       reported_user_id,
       reported_content_id,
       report_type,
@@ -202,7 +202,7 @@ class ReportService {
       });
     }
 
-    const report = await ReportModel.findById(report_id);
+    const report = await Report.findById(report_id);
     if (!report)
       throw new ErrorResponse({
         message: "Report not found",

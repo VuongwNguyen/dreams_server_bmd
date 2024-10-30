@@ -85,7 +85,6 @@ class PostService {
       title,
     });
 
-
     if (Array.isArray(tagUsers) && tagUsers.length > 0) {
       await Promise.all(
         tagUsers.map((tagUser) =>
@@ -98,9 +97,9 @@ class PostService {
         )
       ); // gửi thông báo cho người được tag
     }
-    
+
     const followers = await Follow.find({ following: user_id }).lean();
-    
+
     if (Array.isArray(followers) && followers.length > 0) {
       await Promise.all(
         followers.map((follower) =>
@@ -113,7 +112,6 @@ class PostService {
         )
       ); // gửi thông báo cho người theo dõi
     }
-    
 
     return newPost;
   }
@@ -126,7 +124,6 @@ class PostService {
 
     const totalRecords = await Post.countDocuments({
       privacy_status: "public",
-      // _id: { $nin: user.post_viewed }, // loại bỏ các bài đã xem
     });
 
     if (!user) {
@@ -135,12 +132,12 @@ class PostService {
         code: 400,
       });
     }
-    //  lấy các bài viết public, không phải của user, không phải bài đã xem, user đang follow
+
+    // Lấy các bài viết public, không phải của user, không phải bài đã xem
     const posts = await Post.aggregate([
       {
         $match: {
           privacy_status: "public",
-          // _id: { $nin: user.post_viewed },
         },
       },
       {
@@ -156,7 +153,7 @@ class PostService {
         $lookup: {
           from: "accounts",
           localField: "account_id",
-          foreignField: "_id", // trường nối
+          foreignField: "_id",
           as: "author",
         },
       },
@@ -192,16 +189,17 @@ class PostService {
       {
         $lookup: {
           from: "follows",
-          let: { following: "$account_id" },
+          let: {
+            followerId: new mongoose.Types.ObjectId(user_id),
+            followingId: "$account_id",
+          },
           pipeline: [
             {
               $match: {
                 $expr: {
                   $and: [
-                    {
-                      $eq: ["$follower", new mongoose.Types.ObjectId(user_id)],
-                    },
-                    { $eq: ["$following", "$following"] },
+                    { $eq: ["$follower", "$$followerId"] },
+                    { $eq: ["$following", "$$followingId"] },
                   ],
                 },
               },
@@ -213,7 +211,7 @@ class PostService {
       {
         $addFields: {
           likeCount: { $size: "$like" },
-          isLiked: { $in: [new mongoose.Types.ObjectId(user_id), "$like"] }, // Kiểm tra người dùng đã like chưa
+          isLiked: { $in: [new mongoose.Types.ObjectId(user_id), "$like"] },
           commentCount: { $size: "$comments" },
           tagUsers: {
             $map: {
@@ -236,16 +234,12 @@ class PostService {
           },
           followedStatus: {
             $cond: {
-              if: { $gt: [{ $size: "$followedStatus" }, 0] },
+              if: { $gt: [{ $size: "$followedStatus" }, 0] }, // Sửa điều kiện so sánh
               then: true,
               else: false,
             },
-          }, // Kiểm tra người dùng đã follow chưa
+          },
         },
-      },
-
-      {
-        $addFields: {},
       },
       {
         $project: {
@@ -282,6 +276,7 @@ class PostService {
         },
       },
     ]);
+
     return {
       list: posts,
       page: {
@@ -422,7 +417,7 @@ class PostService {
               then: true,
               else: false,
             },
-          }, // Kiểm tra người dùng đã follow chưa
+          },
         },
       },
       {

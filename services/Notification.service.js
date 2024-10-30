@@ -4,6 +4,7 @@ const { ErrorResponse } = require("../core/reponseHandle");
 
 class NotificationService {
   async createNotification({ receiver, sender, type, post_id, comment_id }) {
+    console.log(receiver, sender, type, post_id, comment_id);
     const notification = await Notification.create({
       receiver,
       sender,

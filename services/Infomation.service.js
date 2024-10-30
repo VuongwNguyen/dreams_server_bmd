@@ -51,8 +51,6 @@ class InfomationService {
     if (!user_id_view) user_id_view = user_id;
     const result = await Account.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(user_id_view) } },
-
-      // Add nickname và description dựa trên key trong infomation
       {
         $addFields: {
           description: {

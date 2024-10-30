@@ -1,12 +1,12 @@
-const Account = require('./AccountModel')
-const KeyStore = require('./KeyStoreModel')
-const Comment = require('./CommentModel')
-const Hashtag = require('./HashtagModel')
-const Follow = require('./FollowModel')
-const Post = require('./PostModel')
-const Room = require('./RoomModel')
-const Message = require('./MessageModel')
-
+const Account = require("./AccountModel");
+const KeyStore = require("./KeyStoreModel");
+const Comment = require("./CommentModel");
+const Hashtag = require("./HashtagModel");
+const Follow = require("./FollowModel");
+const Post = require("./PostModel");
+const Room = require("./RoomModel");
+const Message = require("./MessageModel");
+const Notification = require("./NotificationModel");
 
 module.exports = {
   Account,
@@ -16,5 +16,6 @@ module.exports = {
   Follow,
   Post,
   Room,
-  Message
-}
+  Message,
+  Notification,
+};

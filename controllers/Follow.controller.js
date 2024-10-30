@@ -12,7 +12,7 @@ class FollowController {
     });
 
     return new SuccessfullyReponse({
-      data: null,
+      data: result.data,
       message: result.message,
     }).json(res);
   }

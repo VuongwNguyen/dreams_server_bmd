@@ -1,7 +1,7 @@
 const { Follow, Account } = require("../models");
-
 const { ErrorResponse } = require("../core/reponseHandle");
 const mongoose = require("mongoose");
+const NotificationService = require("./Notification.service");
 
 class FollowService {
   async toggleFollowUser({ user_id, following }) {
@@ -46,8 +46,15 @@ class FollowService {
           status: 400,
         });
 
+      await NotificationService.createNotification({
+        receiver: following,
+        sender: user_id,
+        type: "follow",
+      });
+
       return {
         message: "Followed successfully",
+        data:await NotificationService.getNotifications({ receiver: following })
       };
     }
   }

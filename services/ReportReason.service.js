@@ -49,7 +49,7 @@ class ReportService {
 
   async getReports(report_type) {
     const checkType = ENUM_TYPE.includes(report_type);
-    if (checkType)
+    if (!checkType)
       throw new ErrorResponse({
         message: "Invalid report type",
         code: 400,

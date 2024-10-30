@@ -5,6 +5,7 @@ const { Worker } = require("bullmq");
 const { default: mongoose } = require("mongoose");
 const CommentService = require("./Comment.service");
 const { url } = require("../config/cloudinary");
+const NotificationService = require("./Notification.service");
 
 // const notificationWorker = new Worker(
 //   "notification",
@@ -84,57 +85,35 @@ class PostService {
       title,
     });
 
-    // const tokens = await Follow.aggregate([
-    //   {
-    //     $match: {
-    //       following: user_id,
-    //     },
-    //   },
-    //   {
-    //     $lookup: {
-    //       from: "Account",
-    //       localField: "follower",
-    //       foreignField: "_id",
-    //       pipeline: [
-    //         {
-    //           $match: {
-    //             fcm_token: { $ne: null },
-    //           },
-    //         },
-    //         {
-    //           $project: {
-    //             _id: 1,
-    //             fcm_token: 1,
-    //           },
-    //         },
-    //       ],
-    //       as: "user",
-    //     },
-    //   },
-    //   {
-    //     $unwind: "$user",
-    //   },
-    //   {
-    //     $group: {
-    //       _id: "$following",
-    //       fcm_tokens: {
-    //         $push: "$user.fcm_token",
-    //       },
-    //     },
-    //   },
-    //   {
-    //     $project: {
-    //       _id: 0,
-    //       fcm_tokens: 1,
-    //     },
-    //   },
-    // ]);
 
-    // const chunks = _.chunk(tokens.tokens, 500);
-
-    // chunks.forEach(function (chunk) {
-    //   notificationWorker.add({ tokens: chunk });
-    // });
+    if (Array.isArray(tagUsers) && tagUsers.length > 0) {
+      await Promise.all(
+        tagUsers.map((tagUser) =>
+          NotificationService.createNotification({
+            sender: user_id,
+            receiver: tagUser,
+            post_id: newPost._id,
+            type: "mention",
+          })
+        )
+      ); // gửi thông báo cho người được tag
+    }
+    
+    const followers = await Follow.find({ following: user_id }).lean();
+    
+    if (Array.isArray(followers) && followers.length > 0) {
+      await Promise.all(
+        followers.map((follower) =>
+          NotificationService.createNotification({
+            sender: user_id,
+            receiver: follower.follower,
+            post_id: newPost._id,
+            type: "post",
+          })
+        )
+      ); // gửi thông báo cho người theo dõi
+    }
+    
 
     return newPost;
   }

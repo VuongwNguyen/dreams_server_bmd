@@ -7,6 +7,7 @@ const Post = require("./PostModel");
 const Room = require("./RoomModel");
 const Message = require("./MessageModel");
 const Notification = require("./NotificationModel");
+const Report = require("./ReportModel");
 
 module.exports = {
   Account,
@@ -18,4 +19,5 @@ module.exports = {
   Room,
   Message,
   Notification,
+  Report,
 };

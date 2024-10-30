@@ -1,7 +1,4 @@
-const {
-  reasonService,
-  reportService,
-} = require("../services/ReportReason.service");
+const reportService = require("../services/Report.service");
 const { SuccessfullyReponse } = require("../core/reponseHandle");
 
 class ReportController {
@@ -43,38 +40,4 @@ class ReportController {
     }).json(res);
   }
 }
-
-class ReasonController {
-  async upSertReason(req, res) {
-    const { reason_id, reason_title } = req.body;
-    const upsertReason = await reasonService.upSertReason({
-      reason_id,
-      reason_title,
-    });
-    return new SuccessfullyReponse({
-      message: upsertReason.message,
-      data: upsertReason.data,
-    }).json(res);
-  }
-
-  async getReasons(req, res) {
-    const reasons = await reasonService.getReasons();
-    return new SuccessfullyReponse({
-      data: reasons,
-      message: "fetched reason succesfully",
-    }).json(res);
-  }
-
-  async deleteReason(req, res) {
-    const { reason_id } = req.body;
-    const reason = await reasonService.deleteReason(reason_id);
-    return new SuccessfullyReponse({
-      message: reason.message,
-    }).json(res);
-  }
-}
-
-const reportController = new ReportController();
-const reasonController = new ReasonController();
-
-module.exports = { reportController, reasonController };
+module.exports = new ReportController();

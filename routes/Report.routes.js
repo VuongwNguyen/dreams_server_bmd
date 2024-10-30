@@ -1,7 +1,4 @@
-const {
-  reportController,
-  reasonController,
-} = require("../controllers/ReportReason.controller");
+const reportController = require("../controllers/Report.controller");
 const router = require("express").Router();
 const { verifyAdmin, verifyUser } = require("../middlewares/verifyUser");
 const asyncHandler = require("../core/asyncHandler");
@@ -13,18 +10,6 @@ router.put(
   "/report",
   verifyAdmin,
   asyncHandler(reportController.judgeTheReport)
-); // admin
-
-router.post(
-  "/reason",
-  verifyAdmin,
-  asyncHandler(reasonController.upSertReason)
-); // admin
-router.get("/reasons", asyncHandler(reasonController.getReasons)); // admin
-router.delete(
-  "/reason",
-  verifyAdmin,
-  asyncHandler(reasonController.deleteReason)
 ); // admin
 
 module.exports = router;

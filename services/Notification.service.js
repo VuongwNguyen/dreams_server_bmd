@@ -111,7 +111,6 @@ class NotificationService {
   }
 
   async detailNotification({ notification_id }) {
-    const PostService = require("./Post.service");
 
     const notification = await Notification.findById(notification_id);
 
@@ -121,17 +120,19 @@ class NotificationService {
         status: 404,
       });
 
+    notification.is_read = true;
+    await notification.save();
+
     if (notification.type !== "follow") {
-      const post = await PostService.getPostDetail({
-        user_id: notification.receiver,
+      return {
         post_id: notification.post_id,
-      });
-      return post;
+        message: "Notification is a post",
+      };
     } else {
-      throw new ErrorResponse({
-        message: "Missing get notification detail",
-        status: 401,
-      });
+      return {
+        sender_id: notification.sender,
+        message: "Notification is a follow",
+      };
     }
   }
 }

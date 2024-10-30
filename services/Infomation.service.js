@@ -319,6 +319,7 @@ class InfomationService {
       fullname: `${result.last_name} ${result.first_name}`,
     };
   }
+
 }
 
 module.exports = new InfomationService();

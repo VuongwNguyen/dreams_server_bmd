@@ -74,6 +74,28 @@ class RoomService {
     };
   }
 
+  async getGroup({ room_id }) {
+    let room = await Room.findOne({ _id: room_id });
+    await room.populate("members.account_id", "first_name last_name avatar");
+    room = room.toObject();
+
+    room.members = room.members.map((member) => {
+      return {
+        account_id: member.account_id._id,
+        fullname: `${member.account_id.first_name} ${member.account_id.last_name}`,
+        avatar: member.account_id?.avatar?.url,
+      };
+    });
+
+    return {
+      ...room,
+      createdAt: undefined,
+      updatedAt: undefined,
+      __v: undefined,
+      host: undefined,
+    };
+  }
+
   async createGroup({ host, members = [], name }) {
     const mems = [host, ...members];
 

@@ -18,5 +18,6 @@ router.use("/infomation", require("./Infomation.routes"));
 router.use("/report-reason", require("./ReportReason.routes"));
 router.use("/room", require("./Room.routes"));
 router.use("/message", require("./Message.routes"));
+router.use("/test", require("./Test.routes"));
 
 module.exports = router;

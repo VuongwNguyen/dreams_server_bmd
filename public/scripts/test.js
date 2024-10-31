@@ -126,3 +126,7 @@ document.getElementById("connect-socket").addEventListener("click", () => {
     list.appendChild(message);
   });
 });
+
+document.getElementById("disconnect-btn").addEventListener("click", () => {
+  socket?.disconnect();
+});

@@ -249,8 +249,11 @@ class AccountService {
     }
   }
 
-  async logout(userId) {
-    return await keystoreService.removeKeyStore(userId);
+  async logout(user_id) {
+    const user = await Account.findOne({ _id: user_id });
+    user.fcm_token = null;
+    await user.save();
+    return await keystoreService.removeKeyStore(user_id);
   }
 
   async getNameAvatarUser(user_id) {
@@ -275,6 +278,17 @@ class AccountService {
     }
 
     user.fcm_token = token;
+    await user.save();
+  }
+
+  async revokeFcmToken({ user_id }) {
+    const user = await Account.findOne({ _id: user_id });
+
+    if (!user) {
+      return;
+    }
+
+    user.fcm_token = null;
     await user.save();
   }
 }

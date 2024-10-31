@@ -1,4 +1,5 @@
 const { SuccessfullyReponse } = require("../core/reponseHandle");
+const { Room } = require("../models");
 const RoomService = require("../services/Room.service");
 
 class RoomController {
@@ -32,6 +33,15 @@ class RoomController {
     new SuccessfullyReponse({
       message: "get rooms success",
       data: await RoomService.getRooms({ user_id, _page, _limit }),
+    }).json(res);
+  }
+
+  async getGroup(req, res, next) {
+    const { room_id } = req.body;
+
+    new SuccessfullyReponse({
+      message: "get group success",
+      data: await RoomService.getGroup({ room_id }),
     }).json(res);
   }
 }

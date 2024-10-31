@@ -20,6 +20,7 @@ var server = http.createServer(app);
 
 const { Server } = require("socket.io");
 const MessageService = require("./services/Message.service");
+const SendNotificationService = require("./services/SendNotification.service");
 
 const io = new Server(server);
 
@@ -110,23 +111,27 @@ io.on("connection", (socket) => {
       // emit event to room
       io.to(roomId).emit("message", message);
 
-      // fetch all socket instance in room
-      const onlines = await io.in(roomId).fetchSockets();
+      const offlines = [];
 
       // update room
       room.members.forEach((mem) => {
+        if (!sockets[mem._id.toString()]) {
+          offlines.push(mem._id.toString());
+        }
+
         io.to(sockets[mem?._id?.toString()]).emit("update-room", message, room);
       });
 
       // handle push notification with offlines
-      const offlines = [];
+      offlines.length > 0 &&
+        (await MessageService.sendMessageNotification(offlines, room._id));
     } catch (e) {
       console.log("message group: ", e);
     }
   });
 
   socket.on("disconnect", () => {
-    console.log(`user ${usersOnline[socket.id]} disconnected`);
+    console.log(`user ${usersOnline[socket.id].user_id} disconnected`);
     io.emit("user-disconnect", usersOnline[socket.id]);
     delete usersOnline[socket.id];
     delete sockets[socket.user.user_id];

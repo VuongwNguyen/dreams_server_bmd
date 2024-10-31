@@ -2,6 +2,7 @@ const Message = require("../models/MessageModel");
 const Room = require("../models/RoomModel");
 const { ErrorResponse } = require("../core/reponseHandle");
 const mongoose = require("mongoose");
+const SendNotificationService = require("./SendNotification.service");
 const ObjectId = mongoose.Types.ObjectId;
 
 class MessageService {
@@ -170,6 +171,76 @@ class MessageService {
       console.log(e);
       e.code = 500;
       throw e;
+    }
+  }
+
+  async sendMessageNotification(user_ids, room_id) {
+    const room = await Room.findOne({ _id: room_id });
+    await room.populate("members.account_id", "first_name last_name");
+
+    if (!room) {
+      throw new Error("Not found room");
+    }
+
+    const messages = await Message.find({ room_id: room_id })
+      .sort({
+        createdAt: -1,
+      })
+      .limit(5)
+      .populate("author", "first_name last_name");
+
+    if (messages.length <= 0) {
+      return;
+    }
+
+    let name = "";
+
+    if (room.is_group) {
+      name = room.name;
+    } else {
+      name =
+        room.members[0].account_id._id.toString() !== user_ids[0]
+          ? `${room.members?.[0]?.account_id?.first_name} ${room.members?.[0]?.account_id?.last_name}`
+          : `${room.members?.[1]?.account_id?.first_name} ${room.members?.[1]?.account_id?.last_name}`;
+    }
+
+    const message = {
+      data: {
+        chat: JSON.stringify(
+          messages.map((mess) => {
+            return {
+              author: mess.author.first_name + " " + mess.author.last_name,
+              content: mess.content,
+              images: mess?.images?.length || 0,
+              author_id: mess.author._id.toString(),
+            };
+          })
+        ),
+        name,
+        main_message: messages[0].content
+          ? messages[0].content
+          : "Đã gửi " + messages[0].images.length + " ảnh",
+        type: "message",
+        unique_id: room._id.toString(),
+        info: JSON.stringify({
+          is_group: room.is_group,
+          participant: !room.is_group
+            ? user_ids[0] === room.members?.[0]?.account_id?._id?.toString()
+              ? room.members?.[1]?.account_id?._id?.toString()
+              : room.members?.[0]?.account_id?._id?.toString()
+            : null,
+          room_id: room._id.toString(),
+        }),
+      },
+    };
+
+    if (user_ids instanceof Array) {
+      await SendNotificationService.sendBroastCastNotification(
+        user_ids,
+        message
+      );
+    } else {
+      await SendNotificationService.sendNotification(user_ids, message);
     }
   }
 }

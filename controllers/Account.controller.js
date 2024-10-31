@@ -88,9 +88,9 @@ class AccountController {
   }
 
   async logout(req, res, next) {
-    const { userId } = req.user;
+    const { user_id } = req.user;
 
-    await AccountService.logout(userId);
+    await AccountService.logout(user_id);
     new SuccessfullyReponse({
       message: "Logout successfully",
       code: 200,
@@ -114,6 +114,16 @@ class AccountController {
     await AccountService.updateFcmToken({ user_id, token });
     new SuccessfullyReponse({
       message: "update fcm token success",
+    }).json(res);
+  }
+
+  async revokeFcmToken(req, res) {
+    const { user_id } = req.body;
+
+    await AccountService.revokeFcmToken({ user_id });
+
+    new SuccessfullyReponse({
+      message: "revoke fcm token success",
     }).json(res);
   }
 }

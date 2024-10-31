@@ -120,29 +120,29 @@ class FollowService {
         },
       },
     ]);
+    const totalRecords = await Follow.countDocuments({
+      follower: new mongoose.Types.ObjectId(user_id_view),
+    });
 
     for (const following of followings) {
       following.isFollowing = await Follow.countDocuments({
         follower: new mongoose.Types.ObjectId(user_id),
         following: following.user._id,
       }).then((count) => count > 0);
-
-      const totalRecords = await Follow.countDocuments({
-        follower: new mongoose.Types.ObjectId(user_id_view),
-      });
-
-      return {
-        list: followings,
-        page: {
-          maxPage: Math.ceil(totalRecords / _limit),
-          currentPage: +_page,
-          limit: _limit,
-          hasNext: followings.length === _limit,
-          hasPrevious: _page > 1,
-        },
-      };
     }
+
+    return {
+      list: followings,
+      page: {
+        maxPage: Math.ceil(totalRecords / _limit),
+        currentPage: +_page,
+        limit: _limit,
+        hasNext: followings.length === +_limit,
+        hasPrevious: _page > 1,
+      },
+    };
   }
+
   async getFollowers({ user_id, user_id_view, _page = 1, _limit = 10 }) {
     if (!user_id_view) user_id_view = user_id;
     if (!_page || _page < 1) _page = 1;
@@ -171,6 +171,9 @@ class FollowService {
             $concat: ["$follower.first_name", " ", "$follower.last_name"],
           },
           avatar: "$follower.avatar.url",
+          isSelf: {
+            $eq: ["$follower._id", new mongoose.Types.ObjectId(user_id)],
+          },
         },
       },
       {
@@ -182,39 +185,44 @@ class FollowService {
       {
         $project: {
           _id: 1,
-          follower: {
+          user: {
             _id: "$follower._id",
             fullname: "$fullname",
             avatar: "$avatar",
           },
+          isFollowing: {
+            $cond: {
+              if: {
+                $eq: ["$follower._id", new mongoose.Types.ObjectId(user_id)],
+              },
+              then: "$$REMOVE",
+              else: true,
+            },
+          },
+          isSelf: 1,
         },
       },
     ]);
 
     const totalRecords = await Follow.countDocuments({
-      following: new mongoose.Types.ObjectId(user_id_view), 
-    });
-
-
-    const isFollowing = await Follow.exists({
-      follower: new mongoose.Types.ObjectId(user_id), 
       following: new mongoose.Types.ObjectId(user_id_view),
     });
 
-    const isFollowingValue = !!isFollowing; 
-
-    followers.forEach((follower) => {
-      follower.isFollowing = isFollowingValue; 
-    });
+    for (const follower of followers) {
+      follower.isFollowing = await Follow.countDocuments({
+        follower: new mongoose.Types.ObjectId(user_id),
+        following: follower.user._id,
+      }).then((count) => count > 0);
+    }
 
     return {
       list: followers,
       page: {
-        maxPage: Math.ceil(totalRecords / _limit), 
-        currentPage: +_page, 
-        limit: +_limit, 
-        hasNext: followers.length === _limit,
-        hasPrevious: _page > 1, 
+        maxPage: Math.ceil(totalRecords / _limit),
+        currentPage: +_page,
+        limit: +_limit,
+        hasNext: followers.length === +_limit,
+        hasPrevious: _page > 1,
       },
     };
   }

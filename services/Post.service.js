@@ -234,7 +234,7 @@ class PostService {
           },
           followedStatus: {
             $cond: {
-              if: { $gt: [{ $size: "$followedStatus" }, 0] }, // Sửa điều kiện so sánh
+              if: { $gt: [{ $size: "$followedStatus" }, 0] }, 
               then: true,
               else: false,
             },
@@ -276,6 +276,12 @@ class PostService {
         },
       },
     ]);
+
+    posts.forEach((post) => {
+      if (user_id == post.author._id.toString()) {
+        post.isSelf = true;
+      }
+    });
 
     return {
       list: posts,
@@ -397,7 +403,7 @@ class PostService {
             fullname: {
               $concat: ["$author.first_name", " ", "$author.last_name"],
             },
-            avatar: "author.avatar.url",
+            avatar: "$author.avatar.url",
           },
           tagUsers: {
             $map: {
@@ -426,7 +432,7 @@ class PostService {
           author: {
             _id: 1,
             fullname: 1,
-            avatar: "$avatar.url",
+            avatar: 1,
           },
           title: 1,
           content: 1,
@@ -456,6 +462,12 @@ class PostService {
       },
     ]);
 
+    posts.forEach((post) => {
+      if (user_id == post.author._id.toString()) {
+        post.isSelf = true;
+      }
+    });
+
     if (!posts || posts.length === 0)
       throw new ErrorResponse({
         message: "Post not found",
@@ -465,9 +477,9 @@ class PostService {
       list: posts,
       page: {
         maxPage: Math.ceil(totalRecords / _limit),
-        currentPage: _page,
-        limit: _limit,
-        hasNext: posts.length === _limit,
+        currentPage: +_page,
+        limit: +_limit,
+        hasNext: posts.length === +_limit,
         hasPrevious: _page > 1,
       },
     };
@@ -583,7 +595,7 @@ class PostService {
         $lookup: {
           from: "accounts",
           localField: "account_id",
-          foreignField: "_id", // trường nối
+          foreignField: "_id",
           as: "author",
         },
       },
@@ -641,16 +653,16 @@ class PostService {
       {
         $addFields: {
           likeCount: { $size: "$like" },
-          isLiked: { $in: [new mongoose.Types.ObjectId(user_id), "$like"] }, // Kiểm tra người dùng đã like chưa
+          isLiked: { $in: [new mongoose.Types.ObjectId(user_id), "$like"] },
           commentCount: { $size: "$comments" },
           tagUsers: {
             $map: {
               input: "$tagUsers",
               as: "tagUser",
               in: {
-                _id: "$tagUser._id",
+                _id: "$$tagUser._id",
                 fullname: {
-                  $concat: ["$tagUser.first_name", " ", "$tagUser.last_name"],
+                  $concat: ["$$tagUser.first_name", " ", "$$tagUser.last_name"],
                 },
               },
             },
@@ -661,7 +673,7 @@ class PostService {
               then: true,
               else: false,
             },
-          }, // Kiểm tra người dùng đã follow chưa
+          },
         },
       },
       {
@@ -671,7 +683,6 @@ class PostService {
           content: 1,
           createdAt: 1,
           privacy_status: 1,
-
           images: {
             url: 1,
             _id: 1,
@@ -702,6 +713,13 @@ class PostService {
         },
       },
     ]);
+
+    posts.forEach((post) => {
+      if (user_id == post.author._id.toString()) {
+        post.isSelf = true;
+      }
+    });
+
     return {
       list: posts,
       page: {
@@ -854,11 +872,7 @@ class PostService {
       user_id,
     });
 
-    if (!post || post.length === 0)
-      throw new ErrorResponse({
-        message: "Post not found",
-        code: 404,
-      });
+    if (post.author?._id.toString() === user_id) post.isSelf = true;
 
     return {
       post: post[0],
@@ -895,12 +909,6 @@ class PostService {
       .populate("hashtags", "-_id -updatedAt -createdAt -__v")
       .lean();
 
-    if (!posts)
-      throw new ErrorResponse({
-        message: "Post not found",
-        code: 400,
-      });
-
     const followedStatus = await Follow.findOne({
       account_id: user_id,
       followings: posts.account_id?._id,
@@ -911,6 +919,7 @@ class PostService {
       post.isLiked = post.like.includes(user_id);
       delete post.like;
       post.followedStatus = followedStatus ? true : false;
+      post.isSelf = post.account_id._id.toString() === user_id;
     });
 
     return {
@@ -965,12 +974,6 @@ class PostService {
       .populate("hashtags", "-_id -updatedAt -createdAt -__v")
       .lean();
 
-    if (!posts)
-      throw new ErrorResponse({
-        message: "Post not found",
-        code: 400,
-      });
-
     const followedStatus = await Follow.findOne({
       account_id: user_id,
       followings: posts.account_id?._id,
@@ -981,6 +984,7 @@ class PostService {
       post.isLiked = post.like.includes(user_id);
       delete post.like;
       post.followedStatus = followedStatus ? true : false;
+      post.isSelf = post.account_id._id.toString() === user_id;
     });
 
     return {

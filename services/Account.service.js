@@ -223,7 +223,7 @@ class AccountService {
 
       if (!user) {
         throw new ErrorResponse({
-          message: "User not found",
+          message: "User not found, please login",
           code: 401,
         });
       }
@@ -249,14 +249,17 @@ class AccountService {
     }
   }
 
-  async logout(userId) {
-    return await keystoreService.removeKeyStore(userId);
+  async logout(user_id) {
+    const user = await Account.findOne({ _id: user_id });
+    user.fcm_token = null;
+    await user.save();
+    return await keystoreService.removeKeyStore(user_id);
   }
 
   async getNameAvatarUser(user_id) {
     const user = await Account.findOne({ _id: user_id }).lean();
 
-    user.fullname = `${user.first_name} ${user.last_name}`;
+    user.full_name = `${user.first_name} ${user.last_name}`;
     user.avatar = user.avatar.url;
 
     return {
@@ -265,18 +268,26 @@ class AccountService {
     };
   }
 
-  async suspendUser({ user_id, reason, days }) {
+  async updateFcmToken({ user_id, token }) {
     const user = await Account.findOne({ _id: user_id });
 
-    user.isJudged = {
-      judgeDate:
-        days?.length > 0 ? Date.now() + days * 24 * 60 * 60 * 1000 : null,
-      reason,
-    };
+    if (!user) {
+      throw new ErrorResponse({ message: "User not found", code: 400 });
+    }
 
+    user.fcm_token = token;
     await user.save();
+  }
 
-    return true;
+  async revokeFcmToken({ user_id }) {
+    const user = await Account.findOne({ _id: user_id });
+
+    if (!user) {
+      return;
+    }
+
+    user.fcm_token = null;
+    await user.save();
   }
 }
 

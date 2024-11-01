@@ -234,7 +234,7 @@ class PostService {
           },
           followedStatus: {
             $cond: {
-              if: { $gt: [{ $size: "$followedStatus" }, 0] }, 
+              if: { $gt: [{ $size: "$followedStatus" }, 0] },
               then: true,
               else: false,
             },
@@ -412,7 +412,7 @@ class PostService {
               in: {
                 _id: "$$tagUser._id",
                 fullname: {
-                  $concat: ["$tagUser.first_name", " ", "$tagUser.last_name"],
+                  $concat: ["$$tagUser.first_name", " ", "$$tagUser.last_name"],
                 },
               },
             },
@@ -813,9 +813,9 @@ class PostService {
               input: "$tagUsers",
               as: "tagUser",
               in: {
-                _id: "$tagUser._id",
+                _id: "$$tagUser._id",
                 fullname: {
-                  $concat: ["$tagUser.first_name", " ", "$tagUser.last_name"],
+                  $concat: ["$$tagUser.first_name", " ", "$$tagUser.last_name"],
                 },
               },
             },

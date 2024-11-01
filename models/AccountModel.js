@@ -42,15 +42,11 @@ const AccountSchema = new Schema(
       type: {
         url: {
           type: String,
-          required: true,
+          required: false,
           default:
             "https://res.cloudinary.com/dv2vrpiih/image/upload/v1730125815/images/zck5jnecayfut9j9v03z.jpg",
         },
-        public_id: {
-          type: String,
-          required: true,
-          default: "images/zck5jnecayfut9j9v03z",
-        },
+        public_id: { type: String, required: false, default: null },
       },
       required: false,
     },

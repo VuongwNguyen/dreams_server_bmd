@@ -1,6 +1,6 @@
-const router = require("express").Router();
 const { verifyUser } = require("../middlewares/verifyUser");
 
+const router = require("express").Router();
 router.get("/", verifyUser, async (req, res) => {
   res.json({
     status: true,
@@ -16,5 +16,8 @@ router.use("/follow", require("./Follow.routes"));
 router.use("/infomation", require("./Infomation.routes"));
 router.use("/report", require("./Report.routes"));
 router.use("/notify", require("./Notification.routes"));
+router.use("/room", require("./Room.routes"));
+router.use("/message", require("./Message.routes"));
+router.use("/test", require("./Test.routes"));
 
 module.exports = router;

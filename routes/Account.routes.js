@@ -27,5 +27,11 @@ router.post(
   verifyUser,
   asyncHandler(AccountController.getNameAvatarUser)
 );
+router.post(
+  "/update-fcm",
+  verifyUser,
+  asyncHandler(AccountController.updateFcm)
+);
+router.post("/revoke-fcm", asyncHandler(AccountController.revokeFcmToken));
 
 module.exports = router;

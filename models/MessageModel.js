@@ -2,19 +2,24 @@ const { Schema, model } = require("mongoose");
 
 const MessageSchema = new Schema(
   {
+    author: {
+      type: Schema.Types.ObjectId,
+      ref: "Account",
+      require: true,
+    },
     room_id: {
       type: Schema.Types.ObjectId,
       ref: "Room",
       required: true,
     },
-    sender_id: {
+    replied_id: {
       type: Schema.Types.ObjectId,
-      ref: "Account",
-      required: true,
+      ref: "Message",
+      required: false,
     },
     content: {
       type: String,
-      required: true,
+      required: false,
     },
     send_at: {
       type: Date,

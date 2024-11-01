@@ -26,9 +26,12 @@ const OTHER_INFORMATION = [
 
 const ENUM_TYPE = ["post", "comment", "user"];
 
+const ENUM_NOTIFICATION = ["like", "comment", "follow", "mention", "post"];
+
 module.exports = {
   ENUM_INFORMATION,
   ENUM_TYPE,
   BASIC_INFORMATION,
   OTHER_INFORMATION,
+  ENUM_NOTIFICATION,
 };

@@ -1,8 +1,8 @@
 const { Follow, Account } = require("../models");
-
 const { ErrorResponse } = require("../core/reponseHandle");
 const mongoose = require("mongoose");
 const { usersOnline } = require("../socket");
+const NotificationService = require("./Notification.service");
 
 class FollowService {
   async toggleFollowUser({ user_id, following }) {
@@ -34,6 +34,7 @@ class FollowService {
 
       return {
         message: "Unfollowed successfully",
+        data: { folloStatus: false },
       };
     } else {
       const follow = await Follow.create({
@@ -47,22 +48,32 @@ class FollowService {
           status: 400,
         });
 
+      await NotificationService.createNotification({
+        receiver: following,
+        sender: user_id,
+        type: "follow",
+      });
+
       return {
         message: "Followed successfully",
+        data: { followStatus: true },
       };
     }
   }
 
   async getFollowings({ user_id, _page = 1, _limit = 10 }) {
+    if (!user_id_view) user_id_view = user_id;
+    if (!_page || _page < 1) _page = 1;
+    if (!_limit || _limit < 10) _limit = 10;
     const followings = await Follow.aggregate([
       {
         $match: {
-          follower: new mongoose.Types.ObjectId(user_id), // Lọc tất cả các bản ghi mà user_id đang follow người khác
+          follower: new mongoose.Types.ObjectId(user_id_view),
         },
       },
       {
         $lookup: {
-          from: "accounts", // Nối với collection users để lấy thông tin người dùng
+          from: "accounts",
           localField: "following",
           foreignField: "_id",
           as: "following",
@@ -73,15 +84,12 @@ class FollowService {
       },
       {
         $addFields: {
-          following: {
-            _id: "$following._id",
-            fullname: "$following.fisrt_name $following.last_name",
-            avatar: {
-              $ifNull: [
-                "$following.avatar.url",
-                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-              ],
-            },
+          fullname: {
+            $concat: ["$following.first_name", " ", "$following.last_name"],
+          },
+          avatar: "$following.avatar.url",
+          isSelf: {
+            $eq: ["$following._id", new mongoose.Types.ObjectId(user_id)],
           },
         },
       },
@@ -94,11 +102,15 @@ class FollowService {
     ]).exec();
 
     const totalRecords = await Follow.countDocuments({
-      follower: new mongoose.Types.ObjectId(user_id),
+      follower: new mongoose.Types.ObjectId(user_id_view),
     });
 
-    if (!followings)
-      throw new ErrorResponse({ message: "User not found", status: 404 });
+    for (const following of followings) {
+      following.isFollowing = await Follow.countDocuments({
+        follower: new mongoose.Types.ObjectId(user_id),
+        following: following.user._id,
+      }).then((count) => count > 0);
+    }
 
     return {
       list: followings,
@@ -112,19 +124,20 @@ class FollowService {
     };
   }
 
-  async getFollowers({ user_id, _page = 1, _limit = 10 }) {
-    if (!_page || _page) _page = 1;
-    if (!_limit || _limit) _limit = 10;
+  async getFollowers({ user_id, user_id_view, _page = 1, _limit = 10 }) {
+    if (!user_id_view) user_id_view = user_id;
+    if (!_page || _page < 1) _page = 1;
+    if (!_limit || _limit < 10) _limit = 10;
 
     const followers = await Follow.aggregate([
       {
         $match: {
-          following: new mongoose.Types.ObjectId(user_id),
+          following: new mongoose.Types.ObjectId(user_id_view),
         },
       },
       {
         $lookup: {
-          from: "users",
+          from: "accounts",
           localField: "follower",
           foreignField: "_id",
           as: "follower",
@@ -134,41 +147,62 @@ class FollowService {
         $unwind: "$follower",
       },
       {
-        $project: {
-          follower: {
-            _id: "$follower._id",
-            fullname: "$following.fisrt_name $following.last_name",
-            avatar: {
-              $ifNull: [
-                "$following.avatar.url",
-                "https://mir-s3-cdn-cf.behance.net/project_modules/1400_opt_1/d07bca98931623.5ee79b6a8fa55.jpg",
-              ],
-            },
+        $addFields: {
+          fullname: {
+            $concat: ["$follower.first_name", " ", "$follower.last_name"],
+          },
+          avatar: "$follower.avatar.url",
+          isSelf: {
+            $eq: ["$follower._id", new mongoose.Types.ObjectId(user_id)],
           },
         },
       },
       {
-        $skip: +(_page - 1) * _limit,
+        $skip: (_page - 1) * _limit,
       },
       {
         $limit: +_limit,
       },
-    ]).exec();
+      {
+        $project: {
+          _id: 1,
+          user: {
+            _id: "$follower._id",
+            fullname: "$fullname",
+            avatar: "$avatar",
+          },
+          isFollowing: {
+            $cond: {
+              if: {
+                $eq: ["$follower._id", new mongoose.Types.ObjectId(user_id)],
+              },
+              then: "$$REMOVE",
+              else: true,
+            },
+          },
+          isSelf: 1,
+        },
+      },
+    ]);
 
     const totalRecords = await Follow.countDocuments({
-      following: new mongoose.Types.ObjectId(user_id),
+      following: new mongoose.Types.ObjectId(user_id_view),
     });
 
-    if (!followers)
-      throw new ErrorResponse({ message: "User not found", status: 404 });
+    for (const follower of followers) {
+      follower.isFollowing = await Follow.countDocuments({
+        follower: new mongoose.Types.ObjectId(user_id),
+        following: follower.user._id,
+      }).then((count) => count > 0);
+    }
 
     return {
       list: followers,
       page: {
         maxPage: Math.ceil(totalRecords / _limit),
-        currentPage: _page,
-        limit: _limit,
-        hasNext: followers.length === _limit,
+        currentPage: +_page,
+        limit: +_limit,
+        hasNext: followers.length === +_limit,
         hasPrevious: _page > 1,
       },
     };

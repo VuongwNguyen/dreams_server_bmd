@@ -1,6 +1,7 @@
 const { ErrorResponse } = require("../core/reponseHandle");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const { Account } = require("../models");
 
 const verifyUser = (req, res, next) => {
   const token = req?.headers?.authorization?.split(" ")[1];

@@ -27,7 +27,7 @@ class PostController {
   }
 
   async getTrendingPosts(req, res) {
-    const { _page, _limit } = req.params;
+    const { _page, _limit } = req.query;
     const user_id = req.user.user_id;
     const post = await PostService.getTrendingPosts({ user_id, _page, _limit });
 
@@ -74,10 +74,11 @@ class PostController {
   async likePost(req, res) {
     const { post_id } = req.body;
     const user_id = req.user.user_id;
-    await PostService.likePost({ user_id, post_id });
+    const likePost = await PostService.likePost({ user_id, post_id });
 
     return new SuccessfullyReponse({
-      message: "Like post successfully",
+      message: likePost.message,
+      data: likePost.data,
     }).json(res);
   }
 

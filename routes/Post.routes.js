@@ -18,7 +18,7 @@ router.post(
   Upload.deleteResources
 );
 router.get(
-  "/trending-posts/:_page/:_limit",
+  "/trending-posts",
   asyncHandler(PostController.getTrendingPosts)
 );
 router.get(
@@ -27,12 +27,9 @@ router.get(
 );
 router.post("/set-post-viewed", asyncHandler(PostController.setPostViewed));
 router.post("/count-view-post", asyncHandler(PostController.countViewPost));
-router.post("/like-post", verifyUser, asyncHandler(PostController.likePost));
+router.post("/like-post", asyncHandler(PostController.likePost));
 router.get("/get-post-detail/:post_id", asyncHandler(PostController.getPost));
-router.get(
-  "/get-post-by-user",
-  asyncHandler(PostController.getPostByUser)
-);
+router.get("/get-post-by-user", asyncHandler(PostController.getPostByUser));
 router.get("/get-post-detail", asyncHandler(PostController.getPostDetail));
 router.get(
   "/get-post-by-hashtag/:hashtag",

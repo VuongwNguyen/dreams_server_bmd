@@ -1,4 +1,7 @@
 const InfomationController = require("../controllers/Infomation.controller");
+const Upload = require("../middlewares/upload.middleware");
+const uploader = require("../config/uploader");
+
 const router = require("express").Router();
 const { verifyUser } = require("../middlewares/verifyUser");
 const asyncHandler = require("../core/asyncHandler");
@@ -19,6 +22,14 @@ router.get(
 router.get(
   "/get-infomation-by-self-setting",
   asyncHandler(InfomationController.getInfomationBySelfSetting)
+);
+
+router.post(
+  "/change-avatar-name",
+  uploader.single("avatar"),
+  asyncHandler(Upload.changeAvatar),
+  asyncHandler(InfomationController.changeNameAvatar),
+  asyncHandler(Upload.deleteResources)
 );
 
 module.exports = router;

@@ -259,7 +259,7 @@ class AccountService {
   async getNameAvatarUser(user_id) {
     const user = await Account.findOne({ _id: user_id }).lean();
 
-    user.full_name = `${user.first_name} ${user.last_name}`;
+    user.fullname = `${user.first_name} ${user.last_name}`;
     user.avatar = user.avatar.url;
 
     return {

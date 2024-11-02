@@ -44,7 +44,7 @@ const AccountSchema = new Schema(
           type: String,
           required: false,
           default:
-            "https://res.cloudinary.com/dv2vrpiih/image/upload/v1730125815/images/zck5jnecayfut9j9v03z.jpg",
+            "https://res.cloudinary.com/dv2vrpiih/image/upload/v1730545415/images/ombau1l9jbnzkilqic8c.jpg",
         },
         public_id: { type: String, required: false, default: null },
       },

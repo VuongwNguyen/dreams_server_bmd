@@ -26,7 +26,8 @@
     "morgan": "~1.9.1",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.14",
-    "socket.io": "^4.7.5"
+    "socket.io": "^4.7.5",
+    "stream-chat": "^8.42.0"
   },
   "devDependencies": {
     "dotenv": "^16.4.5",

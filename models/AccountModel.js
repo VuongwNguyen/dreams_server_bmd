@@ -1,5 +1,6 @@
 const { Schema, model } = require("mongoose");
 const { ENUM_INFORMATION } = require("../utils/constants");
+const { url } = require("../config/cloudinary");
 
 const AccountSchema = new Schema(
   {
@@ -43,12 +44,14 @@ const AccountSchema = new Schema(
         url: {
           type: String,
           required: false,
-          default:
-            "https://res.cloudinary.com/dv2vrpiih/image/upload/v1730125815/images/zck5jnecayfut9j9v03z.jpg",
         },
-        public_id: { type: String, required: false, default: null },
+        public_id: { type: String, required: false },
       },
       required: false,
+      default: {
+        url: "https://res.cloudinary.com/dv2vrpiih/image/upload/v1730125815/images/zck5jnecayfut9j9v03z.jpg",
+        public_id: null,
+      },
     },
     isJudged: {
       type: {
@@ -57,7 +60,6 @@ const AccountSchema = new Schema(
       },
       default: null,
     },
-
     post_viewed: [
       {
         type: Schema.Types.ObjectId,

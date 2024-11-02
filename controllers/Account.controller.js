@@ -97,16 +97,6 @@ class AccountController {
     }).json(res);
   }
 
-  async getNameAvatarUser(req, res, next) {
-    const { user_id } = req.user;
-    const user = await AccountService.getNameAvatarUser(user_id);
-    new SuccessfullyReponse({
-      data: user,
-      message: "Get name and avatar user successfully",
-      code: 200,
-    }).json(res);
-  }
-
   async updateFcm(req, res) {
     const { user_id } = req.user;
     const { token } = req.body;
@@ -124,6 +114,24 @@ class AccountController {
 
     new SuccessfullyReponse({
       message: "revoke fcm token success",
+    }).json(res);
+  }
+
+  async getInfo(req, res) {
+    const { user_id } = req.user;
+
+    new SuccessfullyReponse({
+      data: await AccountService.getInfo({ user_id }),
+      message: "get info success",
+    }).json(res);
+  }
+
+  async getStreamToken(req, res) {
+    const { user_id } = req.user;
+
+    new SuccessfullyReponse({
+      data: await AccountService.getStreamToken({ user_id }),
+      message: "get stream token",
     }).json(res);
   }
 }

@@ -9,5 +9,6 @@ router.post("/", asyncHandler(RoomController.createGroup));
 router.post("/get-room", asyncHandler(RoomController.getRoom));
 router.post("/get-group", asyncHandler(RoomController.getGroup));
 router.get("/", asyncHandler(RoomController.getRooms));
+router.get("/search", asyncHandler(RoomController.searchUser));
 
 module.exports = router;

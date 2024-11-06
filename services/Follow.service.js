@@ -234,7 +234,7 @@ class FollowService {
 
     const total = await Follow.countDocuments({ follower: user_id });
 
-    const followings = await Follow.aggregate([
+    let followings = await Follow.aggregate([
       {
         $match: {
           follower: new mongoose.Types.ObjectId(user_id),
@@ -275,6 +275,33 @@ class FollowService {
         },
       },
     ]);
+
+    if (followings.length < 3) {
+      followings = await Account.aggregate([
+        {
+          $limit: _limit,
+        },
+        {
+          $skip: (_page - 1) * _limit,
+        },
+        {
+          $project: {
+            fullname: {
+              $concat: ["$first_name", " ", "$last_name"],
+            },
+            avatar: "$avatar.url",
+            isOnline: {
+              $in: [
+                "$_id",
+                Object.values(usersOnline).map(
+                  (user) => new mongoose.Types.ObjectId(user.user_id)
+                ),
+              ],
+            },
+          },
+        },
+      ]);
+    }
 
     return {
       list: followings,

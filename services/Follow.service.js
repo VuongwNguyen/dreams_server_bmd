@@ -61,7 +61,7 @@ class FollowService {
     }
   }
 
-  async getFollowings({ user_id, _page = 1, _limit = 10 }) {
+  async getFollowings({ user_id,user_id_view, _page = 1, _limit = 10 }) {
     if (!user_id_view) user_id_view = user_id;
     if (!_page || _page < 1) _page = 1;
     if (!_limit || _limit < 10) _limit = 10;
@@ -99,6 +99,26 @@ class FollowService {
       {
         $limit: +_limit, // Giới hạn số lượng kết quả
       },
+      {
+        $project: {
+          _id: "$following._id",
+          user: {
+            _id: "$following._id",
+            fullname: "$fullname",
+            avatar: "$avatar",
+          },
+          isFollowing: {
+            $cond: {
+              if: {
+                $eq: ["$following._id", new mongoose.Types.ObjectId(user_id)],
+              },
+              then: "$$REMOVE",
+              else: true,
+            },
+          },
+          isSelf: 1,
+        },
+      }
     ]).exec();
 
     const totalRecords = await Follow.countDocuments({
@@ -108,7 +128,7 @@ class FollowService {
     for (const following of followings) {
       following.isFollowing = await Follow.countDocuments({
         follower: new mongoose.Types.ObjectId(user_id),
-        following: following.user._id,
+        following: new mongoose.Types.ObjectId(following.user._id),
       }).then((count) => count > 0);
     }
 
@@ -192,7 +212,7 @@ class FollowService {
     for (const follower of followers) {
       follower.isFollowing = await Follow.countDocuments({
         follower: new mongoose.Types.ObjectId(user_id),
-        following: follower.user._id,
+        following: new mongoose.Types.ObjectId(follower.user._id),
       }).then((count) => count > 0);
     }
 

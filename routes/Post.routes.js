@@ -22,7 +22,7 @@ router.get(
   asyncHandler(PostController.getTrendingPosts)
 );
 router.get(
-  "/following-posts/:_page/:_limit",
+  "/following-posts",
   asyncHandler(PostController.getFollowingPosts)
 );
 router.post("/set-post-viewed", asyncHandler(PostController.setPostViewed));

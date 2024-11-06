@@ -73,7 +73,7 @@ const AccountSchema = new Schema(
             required: true,
             enum: ENUM_INFORMATION,
           },
-          value: { type: String, required: true },
+          value: { type: String, required: false },
           privacy_status: {
             type: String,
             default: "public",

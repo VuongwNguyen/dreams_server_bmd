@@ -22,7 +22,7 @@ const NotificationService = require("./Notification.service");
 
 class PostService {
   async createPost({
-    parent_id,
+    children_post_id,
     user_id,
     content,
     privacy_status = "private",
@@ -33,10 +33,10 @@ class PostService {
     title,
   }) {
     let user = null;
-    let parentPost = null;
+    let children_post = null;
 
-    if (parent_id) {
-      parentPost = await Post.findOne({ _id: parent_id }).lean();
+    if (children_post_id) {
+      children_post = await Post.findOne({ _id: children_post_id }).lean();
     }
 
     user = await Account.findOne({ _id: user_id }).lean();
@@ -67,16 +67,16 @@ class PostService {
       arrHashtags.push(tag._id);
     }
 
-    if (!parentPost && !content) {
+    if (!children_post && !content) {
       throw new ErrorResponse({ message: "Content is required" });
     }
 
     const newPost = await Post.create({
       content,
       account_id: user_id,
-      parent_post_id: parentPost?.parent_post_id
-        ? parentPost.parent_post_id
-        : parentPost?._id,
+      children_post_id: children_post?.children_post_id
+        ? children_post.children_post_id
+        : children_post?._id,
       privacy_status,
       tagUsers: tagUsers,
       hashtags: arrHashtags,
@@ -124,6 +124,7 @@ class PostService {
 
     const totalRecords = await Post.countDocuments({
       privacy_status: "public",
+      // _id: { $nin: user.post_viewed },
     });
 
     if (!user) {
@@ -138,10 +139,11 @@ class PostService {
       {
         $match: {
           privacy_status: "public",
+          // _id: { $nin: user.post_viewed },
         },
       },
       {
-        $sort: { createdAt: -1, view_count: -1 },
+        $sort: { createdAt: -1, view_count: -1, like: -1 },
       },
       {
         $skip: (+_page - 1) * +_limit,
@@ -158,9 +160,7 @@ class PostService {
         },
       },
       {
-        $unwind: {
-          path: "$author",
-        },
+        $unwind: "$author",
       },
       {
         $lookup: {
@@ -206,6 +206,112 @@ class PostService {
             },
           ],
           as: "followedStatus",
+        },
+      },
+      {
+        $lookup: {
+          from: "posts",
+          let: { postId: "$children_post_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$postId"] } } },
+            {
+              $lookup: {
+                from: "accounts",
+                localField: "account_id",
+                foreignField: "_id",
+                as: "author",
+              },
+            },
+            {
+              $unwind: "$author",
+            },
+            {
+              $lookup: {
+                from: "accounts",
+                localField: "tagUsers",
+                foreignField: "_id",
+                as: "tagUsers",
+              },
+            },
+            {
+              $lookup: {
+                from: "hashtags",
+                localField: "hashtags",
+                foreignField: "_id",
+                as: "hashtags",
+              },
+            },
+            {
+              $lookup: {
+                from: "follows",
+                let: {
+                  followerId: new mongoose.Types.ObjectId(user_id),
+                  followingId: "$account_id",
+                },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ["$follower", "$$followerId"] },
+                          { $eq: ["$following", "$$followingId"] },
+                        ],
+                      },
+                    },
+                  },
+                ],
+                as: "followedStatus",
+              },
+            },
+            {
+              $addFields: {
+                tagUsers: {
+                  $map: {
+                    input: "$tagUsers",
+                    as: "tagUser",
+                    in: {
+                      _id: "$$tagUser._id",
+                      fullname: {
+                        $concat: [
+                          "$$tagUser.first_name",
+                          " ",
+                          "$$tagUser.last_name",
+                        ],
+                      },
+                    },
+                  },
+                },
+                followedStatus: {
+                  $cond: {
+                    if: { $gt: [{ $size: "$followedStatus" }, 0] },
+                    then: true,
+                    else: false,
+                  },
+                },
+              },
+            },
+            {
+              $project: {
+                _id: 1,
+                author: {
+                  _id: "$author._id",
+                  fullname: {
+                    $concat: ["$author.first_name", " ", "$author.last_name"],
+                  },
+                  avatar: "$author.avatar.url",
+                },
+                title: 1,
+                content: 1,
+                createdAt: 1,
+                privacy_status: 1,
+                images: 1,
+                videos: 1,
+                tagUsers: 1,
+                hashtags: 1,
+              },
+            },
+          ],
+          as: "childrenPost",
         },
       },
       {
@@ -273,6 +379,9 @@ class PostService {
           isLiked: 1,
           followedStatus: 1,
           commentCount: 1,
+          childrenPost: {
+            $ifNull: [{ $arrayElemAt: ["$childrenPost", 0] }, null],
+          },
         },
       },
     ]);
@@ -300,11 +409,14 @@ class PostService {
     if (_limit < 10) _limit = 10;
 
     const user = await Account.findOne({ _id: user_id }).lean();
+    const following = await Follow.find({ follower: user_id })
+      .select("following")
+      .lean();
+    const followingIds = following.map((item) => item.following);
 
     const totalRecords = await Post.countDocuments({
       privacy_status: "public",
-      account_id: { $in: user.following },
-      // _id: { $nin: user.post_viewed },
+      account_id: { $in: followingIds },
     });
 
     if (!user) {
@@ -313,17 +425,12 @@ class PostService {
         code: 400,
       });
     }
-    const following = await Follow.find({ follower: user_id })
-      .select("following")
-      .lean();
-    const followingIds = following.map((item) => item.following);
 
     const posts = await Post.aggregate([
       {
         $match: {
           privacy_status: "public",
           account_id: { $in: followingIds },
-          // _id: { $nin: user.post_viewed },
         },
       },
       {
@@ -394,6 +501,112 @@ class PostService {
         },
       },
       {
+        $lookup: {
+          from: "posts",
+          let: { postId: "$children_post_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$postId"] } } },
+            {
+              $lookup: {
+                from: "accounts",
+                localField: "account_id",
+                foreignField: "_id",
+                as: "author",
+              },
+            },
+            {
+              $unwind: "$author",
+            },
+            {
+              $lookup: {
+                from: "accounts",
+                localField: "tagUsers",
+                foreignField: "_id",
+                as: "tagUsers",
+              },
+            },
+            {
+              $lookup: {
+                from: "hashtags",
+                localField: "hashtags",
+                foreignField: "_id",
+                as: "hashtags",
+              },
+            },
+            {
+              $lookup: {
+                from: "follows",
+                let: {
+                  followerId: new mongoose.Types.ObjectId(user_id),
+                  followingId: "$account_id",
+                },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ["$follower", "$$followerId"] },
+                          { $eq: ["$following", "$$followingId"] },
+                        ],
+                      },
+                    },
+                  },
+                ],
+                as: "followedStatus",
+              },
+            },
+            {
+              $addFields: {
+                tagUsers: {
+                  $map: {
+                    input: "$tagUsers",
+                    as: "tagUser",
+                    in: {
+                      _id: "$$tagUser._id",
+                      fullname: {
+                        $concat: [
+                          "$$tagUser.first_name",
+                          " ",
+                          "$$tagUser.last_name",
+                        ],
+                      },
+                    },
+                  },
+                },
+                followedStatus: {
+                  $cond: {
+                    if: { $gt: [{ $size: "$followedStatus" }, 0] },
+                    then: true,
+                    else: false,
+                  },
+                },
+              },
+            },
+            {
+              $project: {
+                _id: 1,
+                author: {
+                  _id: "$author._id",
+                  fullname: {
+                    $concat: ["$author.first_name", " ", "$author.last_name"],
+                  },
+                  avatar: "$author.avatar.url",
+                },
+                title: 1,
+                content: 1,
+                createdAt: 1,
+                privacy_status: 1,
+                images: 1,
+                videos: 1,
+                tagUsers: 1,
+                hashtags: 1,
+              },
+            },
+          ],
+          as: "childrenPost",
+        },
+      },
+      {
         $addFields: {
           likeCount: { $size: "$like" },
           isLiked: { $in: [new mongoose.Types.ObjectId(user_id), "$like"] }, // Kiểm tra người dùng đã like chưa
@@ -458,6 +671,9 @@ class PostService {
           isLiked: 1,
           followedStatus: 1,
           commentCount: 1,
+          childrenPost: {
+            $ifNull: [{ $arrayElemAt: ["$childrenPost", 0] }, null],
+          },
         },
       },
     ]);
@@ -467,12 +683,8 @@ class PostService {
         post.isSelf = true;
       }
     });
+    console.log(totalRecords);
 
-    if (!posts || posts.length === 0)
-      throw new ErrorResponse({
-        message: "Post not found",
-        code: 404,
-      });
     return {
       list: posts,
       page: {
@@ -651,6 +863,112 @@ class PostService {
         },
       },
       {
+        $lookup: {
+          from: "posts",
+          let: { postId: "$children_post_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$postId"] } } },
+            {
+              $lookup: {
+                from: "accounts",
+                localField: "account_id",
+                foreignField: "_id",
+                as: "author",
+              },
+            },
+            {
+              $unwind: "$author",
+            },
+            {
+              $lookup: {
+                from: "accounts",
+                localField: "tagUsers",
+                foreignField: "_id",
+                as: "tagUsers",
+              },
+            },
+            {
+              $lookup: {
+                from: "hashtags",
+                localField: "hashtags",
+                foreignField: "_id",
+                as: "hashtags",
+              },
+            },
+            {
+              $lookup: {
+                from: "follows",
+                let: {
+                  followerId: new mongoose.Types.ObjectId(user_id),
+                  followingId: "$account_id",
+                },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ["$follower", "$$followerId"] },
+                          { $eq: ["$following", "$$followingId"] },
+                        ],
+                      },
+                    },
+                  },
+                ],
+                as: "followedStatus",
+              },
+            },
+            {
+              $addFields: {
+                tagUsers: {
+                  $map: {
+                    input: "$tagUsers",
+                    as: "tagUser",
+                    in: {
+                      _id: "$$tagUser._id",
+                      fullname: {
+                        $concat: [
+                          "$$tagUser.first_name",
+                          " ",
+                          "$$tagUser.last_name",
+                        ],
+                      },
+                    },
+                  },
+                },
+                followedStatus: {
+                  $cond: {
+                    if: { $gt: [{ $size: "$followedStatus" }, 0] },
+                    then: true,
+                    else: false,
+                  },
+                },
+              },
+            },
+            {
+              $project: {
+                _id: 1,
+                author: {
+                  _id: "$author._id",
+                  fullname: {
+                    $concat: ["$author.first_name", " ", "$author.last_name"],
+                  },
+                  avatar: "$author.avatar.url",
+                },
+                title: 1,
+                content: 1,
+                createdAt: 1,
+                privacy_status: 1,
+                images: 1,
+                videos: 1,
+                tagUsers: 1,
+                hashtags: 1,
+              },
+            },
+          ],
+          as: "childrenPost",
+        },
+      },
+      {
         $addFields: {
           likeCount: { $size: "$like" },
           isLiked: { $in: [new mongoose.Types.ObjectId(user_id), "$like"] },
@@ -710,6 +1028,9 @@ class PostService {
           isLiked: 1,
           followedStatus: 1,
           commentCount: 1,
+          childrenPost: {
+            $ifNull: [{ $arrayElemAt: ["$childrenPost", 0] }, null],
+          },
         },
       },
     ]);
@@ -799,6 +1120,14 @@ class PostService {
         },
       },
       {
+        $lookup: {
+          from: "posts",
+          localField: "children_post_id",
+          foreignField: "_id", // trường nối
+          as: "childrenPost",
+        },
+      },
+      {
         $addFields: {
           likeCount: { $size: "$like" },
           isLiked: { $in: [new mongoose.Types.ObjectId(user_id), "$like"] }, // Kiểm tra người dùng đã like chưa
@@ -861,6 +1190,9 @@ class PostService {
           isLiked: 1,
           followedStatus: 1,
           commentCount: 1,
+          childrenPost: {
+            $ifNull: [{ $arrayElemAt: ["$childrenPost", 0] }, null],
+          },
         },
       },
     ]);

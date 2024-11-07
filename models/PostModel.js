@@ -2,7 +2,7 @@ const { Schema, model } = require("mongoose");
 
 const PostSchema = new Schema(
   {
-    parent_post_id: {
+    children_post_id: {
       type: Schema.Types.ObjectId,
       ref: "Post",
       required: false,

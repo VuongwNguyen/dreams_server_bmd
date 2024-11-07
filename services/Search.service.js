@@ -84,6 +84,13 @@ class SearchService {
               else: false,
             },
           },
+          location: {
+            $filter: {
+              input: "$infomation",
+              as: "info",
+              cond: { $eq: ["$$info.key", "zone"] },
+            },
+          },
         },
       },
       {
@@ -98,6 +105,11 @@ class SearchService {
           isFollowed: 1,
           _id: 1,
           avatar: "$avatar.url",
+          location: 1,
+          information: 1,
+          location: {
+            $ifNull: [{ $arrayElemAt: ["$infomation.value", 0] }, null],
+          },
         },
       },
     ]);
@@ -277,6 +289,112 @@ class SearchService {
         },
       },
       {
+        $lookup: {
+          from: "posts",
+          let: { postId: "$children_post_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$postId"] } } },
+            {
+              $lookup: {
+                from: "accounts",
+                localField: "account_id",
+                foreignField: "_id",
+                as: "author",
+              },
+            },
+            {
+              $unwind: "$author",
+            },
+            {
+              $lookup: {
+                from: "accounts",
+                localField: "tagUsers",
+                foreignField: "_id",
+                as: "tagUsers",
+              },
+            },
+            {
+              $lookup: {
+                from: "hashtags",
+                localField: "hashtags",
+                foreignField: "_id",
+                as: "hashtags",
+              },
+            },
+            {
+              $lookup: {
+                from: "follows",
+                let: {
+                  followerId: new mongoose.Types.ObjectId(user_id),
+                  followingId: "$account_id",
+                },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ["$follower", "$$followerId"] },
+                          { $eq: ["$following", "$$followingId"] },
+                        ],
+                      },
+                    },
+                  },
+                ],
+                as: "followedStatus",
+              },
+            },
+            {
+              $addFields: {
+                tagUsers: {
+                  $map: {
+                    input: "$tagUsers",
+                    as: "tagUser",
+                    in: {
+                      _id: "$$tagUser._id",
+                      fullname: {
+                        $concat: [
+                          "$$tagUser.first_name",
+                          " ",
+                          "$$tagUser.last_name",
+                        ],
+                      },
+                    },
+                  },
+                },
+                followedStatus: {
+                  $cond: {
+                    if: { $gt: [{ $size: "$followedStatus" }, 0] },
+                    then: true,
+                    else: false,
+                  },
+                },
+              },
+            },
+            {
+              $project: {
+                _id: 1,
+                author: {
+                  _id: "$author._id",
+                  fullname: {
+                    $concat: ["$author.first_name", " ", "$author.last_name"],
+                  },
+                  avatar: "$author.avatar.url",
+                },
+                title: 1,
+                content: 1,
+                createdAt: 1,
+                privacy_status: 1,
+                images: 1,
+                videos: 1,
+                tagUsers: 1,
+                hashtags: 1,
+              },
+            },
+          ],
+          as: "childrenPost",
+        },
+      },
+      {
         $project: {
           author: 1,
           content: 1,
@@ -290,6 +408,9 @@ class SearchService {
           likeCount: {
             $size: "$like",
           },
+          isSelf: {
+            $eq: ["$author._id", new mongoose.Types.ObjectId(user_id)],
+          },
           followedStatus: {
             $gt: [{ $size: "$follow" }, 0],
           },
@@ -298,6 +419,12 @@ class SearchService {
           },
           commentCount: {
             $size: "$comments",
+          },
+          childrenPost: {
+            $ifNull: [{ $arrayElemAt: ["$childrenPost", 0] }, null],
+          },
+          isSelf: {
+            $eq: ["$author._id", new mongoose.Types.ObjectId(user_id)],
           },
         },
       },
@@ -425,6 +552,112 @@ class SearchService {
         },
       },
       {
+        $lookup: {
+          from: "posts",
+          let: { postId: "$children_post_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$postId"] } } },
+            {
+              $lookup: {
+                from: "accounts",
+                localField: "account_id",
+                foreignField: "_id",
+                as: "author",
+              },
+            },
+            {
+              $unwind: "$author",
+            },
+            {
+              $lookup: {
+                from: "accounts",
+                localField: "tagUsers",
+                foreignField: "_id",
+                as: "tagUsers",
+              },
+            },
+            {
+              $lookup: {
+                from: "hashtags",
+                localField: "hashtags",
+                foreignField: "_id",
+                as: "hashtags",
+              },
+            },
+            {
+              $lookup: {
+                from: "follows",
+                let: {
+                  followerId: new mongoose.Types.ObjectId(user_id),
+                  followingId: "$account_id",
+                },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ["$follower", "$$followerId"] },
+                          { $eq: ["$following", "$$followingId"] },
+                        ],
+                      },
+                    },
+                  },
+                ],
+                as: "followedStatus",
+              },
+            },
+            {
+              $addFields: {
+                tagUsers: {
+                  $map: {
+                    input: "$tagUsers",
+                    as: "tagUser",
+                    in: {
+                      _id: "$$tagUser._id",
+                      fullname: {
+                        $concat: [
+                          "$$tagUser.first_name",
+                          " ",
+                          "$$tagUser.last_name",
+                        ],
+                      },
+                    },
+                  },
+                },
+                followedStatus: {
+                  $cond: {
+                    if: { $gt: [{ $size: "$followedStatus" }, 0] },
+                    then: true,
+                    else: false,
+                  },
+                },
+              },
+            },
+            {
+              $project: {
+                _id: 1,
+                author: {
+                  _id: "$author._id",
+                  fullname: {
+                    $concat: ["$author.first_name", " ", "$author.last_name"],
+                  },
+                  avatar: "$author.avatar.url",
+                },
+                title: 1,
+                content: 1,
+                createdAt: 1,
+                privacy_status: 1,
+                images: 1,
+                videos: 1,
+                tagUsers: 1,
+                hashtags: 1,
+              },
+            },
+          ],
+          as: "childrenPost",
+        },
+      },
+      {
         $project: {
           author: 1,
           content: 1,
@@ -446,6 +679,12 @@ class SearchService {
           },
           commentCount: {
             $size: "$comments",
+          },
+          childrenPost: {
+            $ifNull: [{ $arrayElemAt: ["$childrenPost", 0] }, null],
+          },
+          isSelf: {
+            $eq: ["$author._id", new mongoose.Types.ObjectId(user_id)],
           },
         },
       },

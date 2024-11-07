@@ -3,14 +3,14 @@ const PostService = require("../services/Post.service");
 
 class PostController {
   async createPost(req, res) {
-    const { content, parent_id, privacy_status, tagUsers, hashtags, title } =
+    const { content, children_post_id, privacy_status, tagUsers, hashtags, title } =
       req.body;
     const user_id = req.user.user_id;
     const videos = req.videos;
     const images = req.images;
     const post = await PostService.createPost({
       content,
-      parent_id,
+      children_post_id,
       privacy_status,
       user_id,
       tagUsers,
@@ -38,7 +38,7 @@ class PostController {
   }
 
   async getFollowingPosts(req, res) {
-    const { _page, _limit } = req.params;
+    const { _page, _limit } = req.query;
     const user_id = req.user.user_id;
     const post = await PostService.getFollowingPosts({
       user_id,

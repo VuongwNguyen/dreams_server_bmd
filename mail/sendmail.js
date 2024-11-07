@@ -14,7 +14,13 @@ const sendmail = async (option) => {
   });
 
   // send mail with defined transport object
-  const info = await transporter.sendMail(option);
+  const info = transporter.sendMail(option, (err, info) => {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log("Email sent: " + info.response);
+    }
+  });
   return info;
 };
 

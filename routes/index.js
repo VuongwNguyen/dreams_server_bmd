@@ -19,5 +19,6 @@ router.use("/notify", require("./Notification.routes"));
 router.use("/room", require("./Room.routes"));
 router.use("/message", require("./Message.routes"));
 router.use("/test", require("./Test.routes"));
+router.use("/search", require("./Search.route"));
 
 module.exports = router;

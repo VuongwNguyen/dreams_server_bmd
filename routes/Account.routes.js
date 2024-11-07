@@ -22,10 +22,11 @@ router.post(
 router.post("/reset-password", asyncHandler(AccountController.resetPassword));
 router.post("/renew-tokens", asyncHandler(AccountController.renewTokens));
 router.post("/logout", verifyUser, asyncHandler(AccountController.logout));
+router.get("/get-info", verifyUser, asyncHandler(AccountController.getInfo));
 router.post(
-  "/get-name-avatar-user",
+  "/get-stream-token",
   verifyUser,
-  asyncHandler(AccountController.getNameAvatarUser)
+  asyncHandler(AccountController.getStreamToken)
 );
 router.post(
   "/update-fcm",

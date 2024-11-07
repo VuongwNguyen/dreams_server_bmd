@@ -143,4 +143,5 @@ module.exports = {
   server,
   io,
   usersOnline,
+  sockets,
 };

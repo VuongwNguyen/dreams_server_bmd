@@ -1,3 +1,4 @@
+require("dotenv").config();
 const { Account, KeyStore } = require("../models");
 const { ErrorResponse } = require("../core/reponseHandle");
 const bcrypt = require("bcryptjs");
@@ -10,6 +11,11 @@ const salt = bcrypt.genSaltSync(10);
 const code = Math.floor(1000 + Math.random() * 9000).toString();
 const verify = new MapCode();
 const verifyObj = { verify: true };
+
+const StreamChat = require("stream-chat").StreamChat;
+const { STREAM_API_KEY, STREAM_API_SECRET } = process.env;
+const streamClient = StreamChat.getInstance(STREAM_API_KEY, STREAM_API_SECRET);
+
 class AccountService {
   async register(data) {
     const { first_name, last_name, email, phone, password } = data;
@@ -38,9 +44,19 @@ class AccountService {
     // create new user
     const newUser = await Account.create(data);
 
+    await streamClient.upsertUser({
+      name: `${newUser.first_name} ${newUser.last_name}`,
+      id: newUser._id.toString(),
+      role: "admin",
+    });
+
     verify.set(newUser._id.toString(), code);
     sendMail(GetVerifyCode(code, email));
     return newUser;
+  }
+
+  async getStreamToken({ user_id }) {
+    return streamClient.createToken(user_id);
   }
 
   async login(data) {
@@ -256,18 +272,6 @@ class AccountService {
     return await keystoreService.removeKeyStore(user_id);
   }
 
-  async getNameAvatarUser(user_id) {
-    const user = await Account.findOne({ _id: user_id }).lean();
-
-    user.fullname = `${user.first_name} ${user.last_name}`;
-    user.avatar = user.avatar.url;
-
-    return {
-      fullname: user.fullname,
-      avatar: user.avatar,
-    };
-  }
-
   async updateFcmToken({ user_id, token }) {
     const user = await Account.findOne({ _id: user_id });
 
@@ -288,6 +292,35 @@ class AccountService {
 
     user.fcm_token = null;
     await user.save();
+  }
+
+  async getInfo({ user_id }) {
+    let user = await Account.findOne(
+      { _id: user_id },
+      {
+        first_name: 1,
+        last_name: 1,
+        avatar: 1,
+        phone: 1,
+        email: 1,
+      }
+    );
+
+    if (!user) {
+      throw new ErrorResponse({
+        message: "not found user",
+        code: 400,
+      });
+    }
+
+    user = user.toObject();
+
+    user.fullname = `${user.first_name} ${user.last_name}`;
+    user.avatar = user.avatar.url;
+    delete user.first_name;
+    delete user.last_name;
+
+    return user;
   }
 }
 

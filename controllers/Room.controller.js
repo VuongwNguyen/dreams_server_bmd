@@ -44,6 +44,22 @@ class RoomController {
       data: await RoomService.getGroup({ room_id }),
     }).json(res);
   }
+
+  async searchUser(req, res, next) {
+    const { user_id } = req.user;
+    const { keyword, _page, _limit, is_group } = req.query;
+
+    new SuccessfullyReponse({
+      message: "get list success",
+      data: await RoomService.searchUser({
+        keyword,
+        _page,
+        _limit,
+        is_group,
+        user_id,
+      }),
+    }).json(res);
+  }
 }
 
 module.exports = new RoomController();

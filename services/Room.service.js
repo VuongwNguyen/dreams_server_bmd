@@ -1,6 +1,8 @@
 const Room = require("../models/RoomModel");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
+const User = require("../models/AccountModel");
+const { io, usersOnline, sockets } = require("../socket");
 
 class RoomService {
   async createDirectRoom({ members = [], user_id }) {
@@ -99,7 +101,7 @@ class RoomService {
   async createGroup({ host, members = [], name }) {
     const mems = [host, ...members];
 
-    const room = await Room.create({
+    let room = await Room.create({
       is_group: true,
       members: mems.map((mem) => {
         return { account_id: mem };
@@ -108,7 +110,20 @@ class RoomService {
       name,
     });
 
-    return room.toObject();
+    await room.populate("members.account_id", "avatar");
+
+    room = room.toObject();
+
+    room.members = room.members.map((mem) => {
+      return {
+        avatar: mem.account_id.avatar.url,
+        _id: mem.account_id._id,
+      };
+    });
+
+    io.to(mems.map((mem) => sockets[mem])).emit("update-room", null, room);
+
+    return room;
   }
 
   async getRooms({ user_id, _page = 1, _limit = 10 }) {
@@ -265,6 +280,96 @@ class RoomService {
       e.code = 500;
       throw e;
     }
+  }
+
+  async searchUser({ keyword, user_id, is_group = 0, _page = 1, _limit = 20 }) {
+    _page = parseInt(_page);
+    _limit = parseInt(_limit);
+    is_group = parseInt(is_group);
+    let data;
+    let total;
+
+    if (is_group === 0) {
+      total = await User.countDocuments({
+        _id: { $ne: user_id },
+        $or: [
+          { first_name: { $regex: keyword, $options: "i" } },
+          { last_name: { $regex: keyword, $options: "i" } },
+          {
+            $expr: {
+              $regexMatch: {
+                input: { $concat: ["$first_name", " ", "$last_name"] },
+                regex: keyword,
+                options: "i",
+              },
+            },
+          },
+        ],
+      });
+
+      const skip = (_page - 1) * _limit;
+
+      data = await User.find({
+        _id: { $ne: user_id },
+        $or: [
+          { first_name: { $regex: keyword, $options: "i" } },
+          { last_name: { $regex: keyword, $options: "i" } },
+          {
+            $expr: {
+              $regexMatch: {
+                input: { $concat: ["$first_name", " ", "$last_name"] },
+                regex: keyword,
+                options: "i",
+              },
+            },
+          },
+        ],
+      })
+        .skip(skip)
+        .limit(_limit);
+
+      data = data.map((item) => {
+        return {
+          _id: item._id,
+          fullname: `${item.first_name} ${item.last_name}`,
+          avatar: item?.avatar?.url,
+          is_group: false,
+        };
+      });
+    } else {
+      total = await Room.countDocuments({
+        "members.account_id": { $in: user_id },
+        name: {
+          $regex: keyword,
+          $options: "i",
+        },
+        is_group: true,
+      });
+
+      const skip = (_page - 1) * _limit;
+
+      data = await Room.find({
+        "members.account_id": { $in: user_id },
+        name: {
+          $regex: keyword,
+          $options: "i",
+        },
+        is_group: true,
+      })
+        .skip(skip)
+        .limit(_limit)
+        .populate("members.account_id", "avatar");
+    }
+    return {
+      list: data,
+      page: {
+        max: Math.ceil(total / _limit),
+        current: _page,
+        prev: _page > 1,
+        next: data.length === _limit,
+        limit: _limit,
+      },
+    };
   }
 }
 

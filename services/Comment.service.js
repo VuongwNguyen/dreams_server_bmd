@@ -2,6 +2,7 @@ const { ErrorResponse } = require("../core/reponseHandle");
 const Post = require("../models/PostModel");
 const Comment = require("../models/CommentModel");
 const { default: mongoose } = require("mongoose");
+const NotificationService = require("./Notification.service");
 class CommentService {
   async createComment({ post_id, user_id, reply_comment_id, content }) {
     if (!post_id || !content) {
@@ -43,6 +44,15 @@ class CommentService {
           : replyComment.depth + 1
         : 0,
     });
+
+    NotificationService.createNotification({
+      receiver: post.account_id,
+      sender: user_id,
+      type: "comment",
+      post_id,
+      comment_id: newComment._id,
+    });
+
 
     return newComment;
   }

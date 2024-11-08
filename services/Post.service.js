@@ -444,7 +444,7 @@ class PostService {
         },
       },
       {
-        $sort: { view_count: -1, createdAt: -1 },
+        $sort: { createdAt: -1 },
       },
       {
         $skip: (+_page - 1) * +_limit,

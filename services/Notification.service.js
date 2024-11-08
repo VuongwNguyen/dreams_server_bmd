@@ -5,7 +5,7 @@ const SendNotificationService = require("./SendNotification.service");
 
 class NotificationService {
   async createNotification({ receiver, sender, type, post_id, comment_id }) {
-    console.log("post_id", post_id);
+    if (receiver.toString() === sender.toString()) return;
     const notification = await Notification.create({
       receiver,
       sender,

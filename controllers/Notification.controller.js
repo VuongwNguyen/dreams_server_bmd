@@ -4,11 +4,12 @@ const { SuccessfullyReponse } = require("../core/reponseHandle");
 class NotificationController {
   async getNotifications(req, res, next) {
     const { user_id } = req.user;
-    const { _limit, _page } = req.query;
+    const { _limit, _page, type } = req.query;
     const notifications = await NotificationService.getNotifications({
       receiver: user_id,
       _limit,
       _page,
+      type,
     });
     return new SuccessfullyReponse({
       data: notifications,
@@ -18,12 +19,10 @@ class NotificationController {
 
   async detailNotification(req, res, next) {
     const { notification_id } = req.params;
-    const notification = await NotificationService.detailNotification({
-      notification_id,
-    });
+    await NotificationService.detailNotification({ notification_id });
     return new SuccessfullyReponse({
-      data: notification,
-      message: "Get notification detail successfully",
+      data: null,
+      message: "Read notification successfully",
     }).json(res);
   }
 }

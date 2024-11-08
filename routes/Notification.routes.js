@@ -9,8 +9,8 @@ router.get(
   asyncHandler(NotificationController.getNotifications)
 );
 
-router.get(
-  "/notifications/:notification_id",
+router.put(
+  "/notification/:notification_id",
   asyncHandler(NotificationController.detailNotification)
 );
 

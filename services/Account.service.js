@@ -129,7 +129,7 @@ class AccountService {
         code: 400,
       });
 
-    if (!verify.equals(user._id.toString(), code))
+    if (!verify.equals(user._id?.toString(), code))
       // nếu code không đúng thì thông báo lỗi
       throw new ErrorResponse({
         message: "Code is incorrect",
@@ -179,7 +179,7 @@ class AccountService {
         code: 400,
       });
 
-    if (!verify.equals(user._id.toString(), verifyObj))
+    if (!verify.equals(user?._id.toString(), verifyObj))
       throw new ErrorResponse({
         message: "Code is incorrect",
         code: 400,

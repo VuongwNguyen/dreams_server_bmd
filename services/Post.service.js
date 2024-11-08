@@ -85,9 +85,12 @@ class PostService {
       title,
     });
 
-    if (Array.isArray(tagUsers) && tagUsers.length > 0) {
+    // Ensure tagUsers is an array
+    const tagUsersArray = Array.isArray(tagUsers) ? tagUsers : [tagUsers];
+
+    if (tagUsersArray.length > 0) {
       await Promise.all(
-        tagUsers.map((tagUser) =>
+        tagUsersArray.map((tagUser) =>
           NotificationService.createNotification({
             sender: user_id,
             receiver: tagUser,
@@ -100,9 +103,12 @@ class PostService {
 
     const followers = await Follow.find({ following: user_id }).lean();
 
-    if (Array.isArray(followers) && followers.length > 0) {
+    // Ensure followers is an array
+    const followersArray = Array.isArray(followers) ? followers : [followers];
+
+    if (followersArray.length > 0) {
       await Promise.all(
-        followers.map((follower) =>
+        followersArray.map((follower) =>
           NotificationService.createNotification({
             sender: user_id,
             receiver: follower.follower,
@@ -754,6 +760,12 @@ class PostService {
     } else {
       await Post.updateOne({ _id: post_id }, { $addToSet: { like: user_id } });
       msg = "Like success";
+      await NotificationService.createNotification({
+        sender: user_id,
+        receiver: post.account_id,
+        post_id: post_id,
+        type: "like",
+      });
     }
 
     const result = await Post.findOne({ _id: post_id });
@@ -797,7 +809,7 @@ class PostService {
             { tagUsers: { $in: [new mongoose.Types.ObjectId(user_id)] } },
           ],
           privacy_status: { $in: privacy_status },
-          violateion: { $ne: null },
+          $or: [{ violateion: { $exists: false } }, { violateion: null }],
         },
       },
       {

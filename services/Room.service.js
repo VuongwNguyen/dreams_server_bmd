@@ -6,6 +6,7 @@ const { io, usersOnline, sockets } = require("../socket");
 
 class RoomService {
   async createDirectRoom({ members = [], user_id }) {
+    console.log("create new room");
     members = members.sort();
 
     let room = await Room.create({
@@ -45,6 +46,7 @@ class RoomService {
 
     let room = await Room.findOne({
       "members.account_id": { $all: sortedMembers },
+      is_group: false,
     });
 
     if (!room)
@@ -214,12 +216,6 @@ class RoomService {
           },
         },
         {
-          $skip: (_page - 1) * _limit,
-        },
-        {
-          $limit: _limit,
-        },
-        {
           $addFields: {
             mess: {
               $sortArray: {
@@ -230,6 +226,24 @@ class RoomService {
               },
             },
           },
+        },
+        {
+          $addFields: {
+            message: {
+              $arrayElemAt: ["$mess", 0],
+            },
+          },
+        },
+        {
+          $sort: {
+            "message.send_at": -1,
+          },
+        },
+        {
+          $skip: (_page - 1) * _limit,
+        },
+        {
+          $limit: _limit,
         },
         {
           $project: {
@@ -259,9 +273,7 @@ class RoomService {
             "members.fullname": 1,
             "members.isMe": 1,
             "members._id": 1,
-            message: {
-              $arrayElemAt: ["$mess", 0],
-            },
+            message: 1,
           },
         },
       ]);

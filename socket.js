@@ -93,16 +93,9 @@ io.on("connection", (socket) => {
         return {
           _id: item.account_id._id,
           avatar: item.account_id?.avatar?.url,
-          isMe:
-            usersOnline[socket.id].user_id === item.account_id?._id?.toString(),
           fullname: `${item.account_id?.first_name} ${item.account_id?.last_name}`,
         };
       });
-      if (!room.is_group)
-        room.name =
-          usersOnline[socket.id].user_id === room.members[0]._id.toString()
-            ? room.members[1].fullname
-            : room.members[0].fullname;
 
       delete room.__v;
       delete room.createdAt;

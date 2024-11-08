@@ -4,7 +4,7 @@ require("dotenv").config();
 
 const DBName = "DreamsBase";
 const uri =
-  // process.env.MONGODB_URI ||
+  process.env.MONGODB_URI ||
   `mongodb+srv://dreamsappbmd:URQijjGVsbK07IXV@cluster0.34yig.mongodb.net/${DBName}`;
 const options = {
   useUnifiedTopology: true,

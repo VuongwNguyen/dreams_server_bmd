@@ -130,8 +130,12 @@ class PostService {
 
     const totalRecords = await Post.countDocuments({
       privacy_status: "public",
-      // _id: { $nin: user.post_viewed },
-      $or: [{ violateion: { $exists: false } }, { violateion: null }],
+      _id: { $nin: user.post_viewed },
+      $and: [
+        {
+          $or: [{ violateion: { $exists: false } }, { violateion: null }],
+        },
+      ],
     });
 
     if (!user) {
@@ -146,8 +150,12 @@ class PostService {
       {
         $match: {
           privacy_status: "public",
-          // _id: { $nin: user.post_viewed },
-          $or: [{ violateion: { $exists: false } }, { violateion: null }],
+          _id: { $nin: user.post_viewed },
+          $and: [
+            {
+              $or: [{ violateion: { $exists: false } }, { violateion: null }],
+            },
+          ],
         },
       },
       {
@@ -425,7 +433,11 @@ class PostService {
     const totalRecords = await Post.countDocuments({
       privacy_status: "public",
       account_id: { $in: followingIds },
-      $or: [{ violateion: { $exists: false } }, { violateion: null }],
+      $and: [
+        {
+          $or: [{ violateion: { $exists: false } }, { violateion: null }],
+        },
+      ],
     });
 
     if (!user) {
@@ -440,7 +452,11 @@ class PostService {
         $match: {
           privacy_status: "public",
           account_id: { $in: followingIds },
-          $or: [{ violateion: { $exists: false } }, { violateion: null }],
+          $and: [
+            {
+              $or: [{ violateion: { $exists: false } }, { violateion: null }],
+            },
+          ],
         },
       },
       {
@@ -789,7 +805,11 @@ class PostService {
 
     const totalRecords = await Post.countDocuments({
       account_id: user_id_view,
-      $or: [{ violateion: { $exists: false } }, { violateion: null }],
+      $and: [
+        {
+          $or: [{ violateion: { $exists: false } }, { violateion: null }],
+        },
+      ],
     });
 
     if (!user || !userView)
@@ -809,7 +829,11 @@ class PostService {
             { tagUsers: { $in: [new mongoose.Types.ObjectId(user_id)] } },
           ],
           privacy_status: { $in: privacy_status },
-          $or: [{ violateion: { $exists: false } }, { violateion: null }],
+          $and: [
+            {
+              $or: [{ violateion: { $exists: false } }, { violateion: null }],
+            },
+          ],
         },
       },
       {
@@ -1076,7 +1100,11 @@ class PostService {
       {
         $match: {
           _id: new mongoose.Types.ObjectId(post_id),
-          $or: [{ violateion: { $exists: false } }, { violateion: null }],
+          $and: [
+            {
+              $or: [{ violateion: { $exists: false } }, { violateion: null }],
+            },
+          ],
         },
       },
       {

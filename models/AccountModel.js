@@ -49,7 +49,7 @@ const AccountSchema = new Schema(
       },
       required: false,
       default: {
-        url: "https://res.cloudinary.com/dv2vrpiih/image/upload/v1730125815/images/zck5jnecayfut9j9v03z.jpg",
+        url: "https://res.cloudinary.com/dv2vrpiih/image/upload/v1730545415/images/ombau1l9jbnzkilqic8c.jpg",
         public_id: null,
       },
     },

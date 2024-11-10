@@ -18,11 +18,15 @@ class ReportController {
   }
 
   async getReports(req, res) {
-    const { report_type } = req.query;
-    const reports = await reportService.getReports(report_type);
+    const { report_type, _limit, _page } = req.query;
+    const reports = await reportService.getReports({
+      report_type,
+      _limit,
+      _page,
+    });
     return new SuccessfullyReponse({
-      data: reports.reports,
-      message: reports.message,
+      data: reports,
+      message: "Get reports successfully",
     }).json(res);
   }
 

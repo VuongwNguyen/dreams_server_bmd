@@ -47,7 +47,7 @@ class ReportService {
   }
 
   async getReports({ report_type, _limit, _page }) {
-    if (!_limit || _limit < 10) _limit = 10;
+    if (!_limit || _limit < 5) _limit = 5;
     if (!_page || _page < 1) _page = 1;
     const checkType = ENUM_TYPE.includes(report_type);
     if (!checkType)
@@ -60,8 +60,8 @@ class ReportService {
     const reports = await Report.aggregate([
       { $match: { report_type: report_type } },
       { $sort: { createdAt: -1 } },
-      { $skip: (_page - 1) * _limit },
-      { $limit: _limit },
+      { $skip: (+_page - 1) * _limit },
+      { $limit: +_limit },
       {
         $lookup: {
           from: "accounts",
@@ -170,6 +170,7 @@ class ReportService {
             $cond: {
               if: { $eq: ["$report_type", "post"] },
               then: {
+                _id: "$reported_content._id",
                 title: "$reported_content.title",
                 content: "$reported_content.content",
                 images: "$reported_content.images.url",

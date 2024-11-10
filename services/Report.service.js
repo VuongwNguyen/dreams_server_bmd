@@ -46,16 +46,22 @@ class ReportService {
     };
   }
 
-  async getReports(report_type) {
+  async getReports({ report_type, _limit, _page }) {
+    if (!_limit || _limit < 10) _limit = 10;
+    if (!_page || _page < 1) _page = 1;
     const checkType = ENUM_TYPE.includes(report_type);
     if (!checkType)
       throw new ErrorResponse({
         message: "Invalid report type",
         code: 400,
       });
+    const totalRecords = await Report.countDocuments({ report_type });
 
     const reports = await Report.aggregate([
       { $match: { report_type: report_type } },
+      { $sort: { createdAt: -1 } },
+      { $skip: (_page - 1) * _limit },
+      { $limit: _limit },
       {
         $lookup: {
           from: "accounts",
@@ -147,8 +153,19 @@ class ReportService {
                 "$reported_user.last_name",
               ],
             },
+            email: "$reported_user.email",
           },
-          judger: 1,
+          judger: {
+            _id: 1,
+            fullname: {
+              $concat: [
+                "$judger.first_name",
+                " ",
+                "$judger.last_name",
+              ],
+            },
+            email: "$judger.email",
+          },
           reported_content: {
             $cond: {
               if: { $eq: ["$report_type", "post"] },
@@ -168,6 +185,7 @@ class ReportService {
                       "$reported_content_user.last_name",
                     ],
                   },
+                  email: "$reported_content_user.email",
                 },
               },
               else: {
@@ -175,7 +193,14 @@ class ReportService {
                   if: { $eq: ["$report_type", "comment"] },
                   then: { text: "$reported_content.text" },
                   else: {
-                    username: "$reported_content.username",
+                    _id: "$reported_content._id",
+                    fullname: {
+                      $concat: [
+                        "$reported_content.first_name",
+                        " ",
+                        "$reported_content.last_name",
+                      ],
+                    },
                     email: "$reported_content.email",
                   },
                 },
@@ -187,8 +212,14 @@ class ReportService {
     ]);
 
     return {
-      reports,
-      message: "Get reports successfully",
+      list: reports,
+      page: {
+        maxPage: Math.ceil(totalRecords / _limit),
+        currentPage: +_page,
+        limit: +_limit,
+        hasNext: reports.length === +_limit,
+        hasPrevious: _page > 1,
+      },
     };
   }
 

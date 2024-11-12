@@ -30,7 +30,7 @@ class StatisticalService {
     _sort = parseInt(_sort);
 
     const skip = (_page - 1) * _limit;
-    const total = await User.countDocuments({ isJudged: { $ne: null } });
+    const total = await User.countDocuments({ isJudged: { $eq: null } });
 
     const sortStage = {
       $sort: {},
@@ -54,8 +54,6 @@ class StatisticalService {
         sortStage.$sort.count_follower = _sort;
       }
     }
-
-    console.log(sortStage);
 
     const users = await User.aggregate([
       {
@@ -127,7 +125,7 @@ class StatisticalService {
         limit: _limit,
         max: Math.ceil(total / _limit),
         current: _page,
-        next: users.length === _limit,
+        next: users.length === _limit && _page !== Math.ceil(total / _limit),
         prev: _page > 1,
       },
     };

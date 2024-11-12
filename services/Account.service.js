@@ -51,7 +51,7 @@ class AccountService {
     });
 
     verify.set(newUser._id.toString(), code);
-    sendMail(GetVerifyCode(code, email));
+    await sendMail(GetVerifyCode(code, email));
     return newUser;
   }
 
@@ -321,6 +321,24 @@ class AccountService {
     delete user.last_name;
 
     return user;
+  }
+
+  async suspendUser({ user_id, judgeDate, reason }) {
+    const user = await Account.findOne({ _id: user_id });
+
+    if (!user) {
+      throw new ErrorResponse({
+        message: "not found user",
+        code: 400,
+      });
+    }
+
+    user.isJudged = {
+      judgeDate,
+      reason,
+    };
+
+    await user.save();
   }
 }
 

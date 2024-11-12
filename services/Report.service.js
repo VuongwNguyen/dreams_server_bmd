@@ -3,6 +3,29 @@ const AccountService = require("./Account.service");
 const PostService = require("./Post.service");
 const { ENUM_TYPE } = require("../utils/constants");
 const { ErrorResponse } = require("../core/reponseHandle");
+// const sendmail = require("../mail/sendMail");
+// const SendNotifyUserBan = require("../mail/option/SendNotifyUserBan");
+// const calculateRemainingTime = (date_of_judge) => {
+//   // Get the current date and the date_of_judge
+//   const currentDate = new Date();
+//   const judgeDate = new Date(date_of_judge);
+
+//   // Calculate the difference in milliseconds
+//   const differenceInMs = judgeDate - currentDate;
+
+//   if (differenceInMs <= 0) {
+//     return "Already expired";
+//   }
+
+//   // Convert milliseconds to days, hours, and minutes
+//   const days = Math.floor(differenceInMs / (1000 * 60 * 60 * 24));
+//   const hours = Math.floor(
+//     (differenceInMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+//   );
+//   const minutes = Math.floor((differenceInMs % (1000 * 60 * 60)) / (1000 * 60));
+
+//   return `${days} days, ${hours} hours, ${minutes} minutes remaining`;
+// };
 
 class ReportService {
   async createReport({
@@ -59,7 +82,7 @@ class ReportService {
 
     const reports = await Report.aggregate([
       { $match: { report_type: report_type } },
-      { $sort: { createdAt: -1 } },
+      { $sort: { status: 1, createdAt: -1 } },
       { $skip: (+_page - 1) * _limit },
       { $limit: +_limit },
       {
@@ -158,11 +181,7 @@ class ReportService {
           judger: {
             _id: 1,
             fullname: {
-              $concat: [
-                "$judger.first_name",
-                " ",
-                "$judger.last_name",
-              ],
+              $concat: ["$judger.first_name", " ", "$judger.last_name"],
             },
             email: "$judger.email",
           },
@@ -226,12 +245,12 @@ class ReportService {
 
   async judgeTheReport(user_id, report_id, status, date_of_judge = "") {
     const checkStatus = ["resolved", "rejected"].includes(status);
-    // if (!checkStatus) {
-    //   throw new ErrorResponse({
-    //     message: "Invalid status",
-    //     code: 400,
-    //   });
-    // }
+    if (!checkStatus) {
+      throw new ErrorResponse({
+        message: "Invalid status",
+        code: 400,
+      });
+    }
 
     const report = await Report.findById(report_id);
     if (!report)
@@ -239,13 +258,12 @@ class ReportService {
         message: "Report not found",
         code: 400,
       });
-    console.log("report", report);
 
-    // if (report.status !== "pending")
-    //   throw new ErrorResponse({
-    //     message: "Report already resolved",
-    //     code: 400,
-    //   });
+    if (report.status !== "pending")
+      throw new ErrorResponse({
+        message: "Report already resolved",
+        code: 400,
+      });
 
     const type = report.report_type;
     const content_id = report.reported_content_id;
@@ -258,19 +276,21 @@ class ReportService {
         date_of_judge,
       });
       report.status = status;
-    } else if (type === "comment" && status === "resolve") {
+    } else if (type === "comment" && status === "resolved") {
       // to be implemented
       throw new ErrorResponse({
         message: "Feature not implemented",
         code: 400,
       });
       report.status = status;
-    } else if (type === "account" && status === "resolve") {
-      await AccountService.suspendUser(content_id, reason, date_of_judge);
+    } else if (type === "user" && status === "resolved") {
+      await AccountService.suspendUser({
+        user_id: content_id,
+        judgeDate: date_of_judge,
+        reason,
+      });
       report.status = status;
-    } else {
-      report.status = status;
-    }
+    } else report.status = status;
 
     report.judger_id = user_id;
     report.date_of_judge = new Date();

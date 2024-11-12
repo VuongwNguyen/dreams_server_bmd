@@ -52,15 +52,14 @@ const verifyAdmin = async (req, res, next) => {
 
 const verifySuperAdmin = (req, res, next) => {
   const { user_id } = req.user;
-  const checkSuperAdmin = Account.findById(user_id)
-    .where({
-      role: "superadmin",
-    })
-    .learn();
+  const checkSuperAdmin = Account.findById(user_id).where({
+    role: "superadmin",
+  });
 
   if (!checkSuperAdmin) {
     return new ErrorResponse({
       message: "You are not super admin",
+      code: 403,
     }).json(res);
   }
   next();

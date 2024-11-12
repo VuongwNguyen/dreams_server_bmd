@@ -3,7 +3,7 @@ function GetVerifyCode(code, mail) {
     from: process.env.EMAIL,
     to: mail,
     subject: "Verify code",
-    html: ` <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+    html: `<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
     <table cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f4; padding: 20px;">
       <tr>
         <td>

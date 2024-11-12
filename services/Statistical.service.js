@@ -87,16 +87,6 @@ class StatisticalService {
           count_post: {
             $size: "$posteds",
           },
-          total: {
-            $sum: [
-              {
-                $size: "$followers",
-              },
-              {
-                $size: "$posteds",
-              },
-            ],
-          },
         },
       },
       sortStage,
@@ -114,7 +104,6 @@ class StatisticalService {
             $concat: ["$first_name", " ", "$last_name"],
           },
           avatar: "$avatar.url",
-          total: 1,
         },
       },
     ]);

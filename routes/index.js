@@ -21,5 +21,6 @@ router.use("/message", require("./Message.routes"));
 router.use("/test", require("./Test.routes"));
 router.use("/search", require("./Search.route"));
 router.use("/admin", require("./Admin.routes"));
+router.use("/statistical", require("./Statistical.routes"));
 
 module.exports = router;

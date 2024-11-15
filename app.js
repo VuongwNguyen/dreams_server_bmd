@@ -21,13 +21,6 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // routes
 app.use("/api", require("./routes"));
-app.get("/", async (req, res) => {
-  res.json({
-    status: true,
-    message: "Welcome to the API of Dreams Social Network",
-    data: null,
-  });
-});
 
 // test
 app.get("/", (req, res) => {

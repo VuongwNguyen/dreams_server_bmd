@@ -340,6 +340,61 @@ class AccountService {
 
     await user.save();
   }
+
+  async authThirdPartner({
+    email,
+    first_name,
+    last_name,
+    avatar,
+    partner_id,
+    password = null,
+  }) {
+    let user = await Account.findOne({ email, partner_id });
+
+    if (!user) {
+      user = await Account.create({
+        email,
+        first_name,
+        last_name,
+        avatar,
+        partner_id,
+        role: "user",
+        password,
+      });
+
+      await streamClient.upsertUser({
+        name: `${user.first_name} ${user.last_name}`,
+        id: user._id.toString(),
+        role: "user",
+      });
+
+      const payload = {
+        user_id: user._id,
+      };
+
+      const tokens = generateTokens(payload);
+
+      await keystoreService.upsertKeyStore({
+        user_id: user._id,
+        refreshToken: tokens.refreshToken,
+      });
+
+      return tokens;
+    }
+
+    const payload = {
+      user_id: user._id,
+    };
+
+    const tokens = generateTokens(payload);
+
+    await keystoreService.upsertKeyStore({
+      user_id: user._id,
+      refreshToken: tokens.refreshToken,
+    });
+
+    return tokens;
+  }
 }
 
 module.exports = new AccountService();

@@ -85,6 +85,10 @@ const AccountSchema = new Schema(
         required: false,
       },
     ],
+    partner_id: {
+      type: String,
+      required: false,
+    },
   },
   {
     timestamps: true,

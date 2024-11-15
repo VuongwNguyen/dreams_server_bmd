@@ -34,5 +34,9 @@ router.post(
   asyncHandler(AccountController.updateFcm)
 );
 router.post("/revoke-fcm", asyncHandler(AccountController.revokeFcmToken));
+router.post(
+  "/auth-third-partner",
+  asyncHandler(AccountController.authThirdPartner)
+);
 
 module.exports = router;

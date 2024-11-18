@@ -19,7 +19,7 @@ router.get(
   asyncHandler(AdminController.getAdmins)
 );
 
-router.delete(
+router.put(
   "/revoke-admin",
   verifyUser,
   verifySuperAdmin,

@@ -198,7 +198,9 @@ class NotificationService {
         status: 400,
       });
 
-    return user.toggleNotification;
+    return {
+      toggleNotification: user.toggleNotification,
+    };
   }
 
   async toggleNotification({ user_id }) {
@@ -211,7 +213,11 @@ class NotificationService {
       });
 
     user.toggleNotification = !user.toggleNotification;
-    return await user.save();
+    const res = await user.save();
+    return {
+      toggleNotification: res.toggleNotification,
+      message: "Toggle notification successfully",
+    };
   }
 }
 

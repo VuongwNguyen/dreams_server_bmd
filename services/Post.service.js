@@ -1379,9 +1379,7 @@ class PostService {
   }
 
   async SuspensionOfPosting({ post_id, reason, date_of_judge }) {
-    console.log(post_id);
     const post = await Post.findOne({ _id: post_id });
-    console.log(post);
 
     post.violateion = {
       reason: reason,

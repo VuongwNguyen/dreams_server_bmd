@@ -103,6 +103,8 @@ class StatisticalService {
           fullname: {
             $concat: ["$first_name", " ", "$last_name"],
           },
+          email:1,
+          createdAt: 1,
           avatar: "$avatar.url",
         },
       },

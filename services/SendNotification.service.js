@@ -19,6 +19,8 @@ class SendNotificationService {
       return "fcm not registered";
     }
 
+    if (!user.toggleNotification) return;
+
     try {
       console.log("send single noti");
       await messaging().send({

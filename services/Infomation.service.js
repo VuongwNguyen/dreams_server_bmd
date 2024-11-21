@@ -179,7 +179,7 @@ class InfomationService {
       {
         $project: {
           _id: 1,
-          fullname: { $concat: ["$last_name", " ", "$first_name"] },
+          fullname: { $concat: ["$first_name", " ", "$last_name"] },
           avatar: "$avatar.url",
           followingCount: 1,
           followerCount: 1,
@@ -262,7 +262,7 @@ class InfomationService {
         $project: {
           infomation: 1,
           avatar: 1,
-          fullname: { $concat: ["$last_name", " ", "$first_name"] },
+          fullname: { $concat: ["$first_name", " ", "$last_name"] },
         },
       },
     ]);
@@ -307,7 +307,7 @@ class InfomationService {
     const result = await user.save();
     return {
       avatar: result.avatar.url,
-      fullname: `${result.last_name} ${result.first_name}`,
+      fullname: `${result.first_name} ${result.last_name}`,
     };
   }
 }

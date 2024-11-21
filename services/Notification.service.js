@@ -13,35 +13,21 @@ class NotificationService {
       post_id,
       comment_id,
     });
-    const user = await Account.findById(sender);
 
-    const body = () => {
-      switch (type) {
-        case "post":
-          return `${user.first_name} ${user.last_name} has created a new post`;
-        case "like":
-          return `${user.first_name} ${user.last_name} has liked your post`;
-        case "comment":
-          return `${user.first_name} ${user.last_name} has commented on your post`;
-        case "mention":
-          return `${user.first_name} ${user.last_name} has mentioned you in a post`;
-        case "follow":
-          return `${user.first_name} ${user.last_name} has followed you`;
-        default:
-          return "";
-      }
-    };
-
-    await SendNotificationService.sendNotification(receiver, {
+    SendNotificationService.sendNotification(receiver, {
       notification: {
         title: "Dreams Social Network",
-        body: body(),
+        body: "You have a new notification",
       },
+    }).catch((e) => {
+      console.log("error when send notification", e);
+      return;
     });
+
     return notification;
   }
 
-  async getNotifications({ receiver, _limit, _page, type = all }) {
+  async getNotifications({ receiver, _limit, _page, type = "all" }) {
     if (!_limit || _limit < 10) _limit = 10;
     if (!_page || _page < 1) _page = 1;
 
@@ -201,6 +187,31 @@ class NotificationService {
 
     notification.is_read = true;
     return await notification.save();
+  }
+
+  async getStatusNotification({ user_id }) {
+    const user = await Account.findById(user_id);
+
+    if (!user)
+      throw new ErrorResponse({
+        message: "User not found",
+        status: 400,
+      });
+
+    return user.toggleNotification;
+  }
+
+  async toggleNotification({ user_id }) {
+    const user = await Account.findById(user_id);
+
+    if (!user)
+      throw new ErrorResponse({
+        message: "User not found",
+        status: 400,
+      });
+
+    user.toggleNotification = !user.toggleNotification;
+    return await user.save();
   }
 }
 

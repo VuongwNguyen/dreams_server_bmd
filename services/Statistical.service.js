@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const User = require("../models/AccountModel");
 const Post = require("../models/PostModel");
 const Report = require("../models/ReportModel");
@@ -103,7 +104,7 @@ class StatisticalService {
           fullname: {
             $concat: ["$first_name", " ", "$last_name"],
           },
-          email:1,
+          email: 1,
           createdAt: 1,
           avatar: "$avatar.url",
         },
@@ -117,6 +118,105 @@ class StatisticalService {
         max: Math.ceil(total / _limit),
         current: _page,
         next: users.length === _limit && _page !== Math.ceil(total / _limit),
+        prev: _page > 1,
+      },
+    };
+  }
+
+  async getPostsByUser({ user_id, _page = 1, _limit = 10, _sort = -1 }) {
+    console.log(user_id);
+    _page = parseInt(_page);
+    _limit = parseInt(_limit);
+    _sort = parseInt(_sort);
+
+    const skip = (_page - 1) * _limit;
+    const total = await Post.countDocuments({ account_id: user_id });
+
+    const posts = await Post.aggregate([
+      {
+        $match: {
+          account_id: new mongoose.Types.ObjectId(user_id),
+        },
+      },
+      {
+        $lookup: {
+          from: "accounts",
+          localField: "account_id",
+          foreignField: "_id",
+          as: "account",
+        },
+      },
+      {
+        $lookup: {
+          from: "hashtags",
+          localField: "hashtags",
+          foreignField: "_id",
+          as: "hashtags",
+        },
+      },
+      {
+        $unwind: "$account",
+      },
+      {
+        $lookup: {
+          from: "comments",
+          localField: "_id",
+          foreignField: "post_id",
+          as: "comments",
+        },
+      },
+      {
+        $addFields: {
+          count_comment: {
+            $size: "$comments",
+          },
+          count_like: {
+            $size: "$like",
+          },
+        },
+      },
+      {
+        $sort: {
+          createdAt: _sort,
+        },
+      },
+      {
+        $skip: skip,
+      },
+      {
+        $limit: _limit,
+      },
+      {
+        $project: {
+          title: 1,
+          content: 1,
+          createdAt: 1,
+          count_comment: 1,
+          images: {
+            url: 1,
+            _id: 1,
+          },
+          videos: {
+            url: 1,
+            _id: 1,
+          },
+          author: {
+            fullname: {
+              $concat: ["$account.first_name", " ", "$account.last_name"],
+            },
+            avatar: "$account.avatar.url",
+          },
+        },
+      },
+    ]);
+
+    return {
+      list: posts,
+      page: {
+        limit: _limit,
+        max: Math.ceil(total / _limit),
+        current: _page,
+        next: posts.length === _limit && _page !== Math.ceil(total / _limit),
         prev: _page > 1,
       },
     };

@@ -22,6 +22,19 @@ class StatisticalController {
       }),
     }).json(res);
   }
+
+  async getPostsByUser(req, res) {
+    const { user_id, _page, _limit, _sort } = req.query;
+    new SuccessfullyReponse({
+      message: "get posts by user success",
+      data: await StatisticalService.getPostsByUser({
+        user_id,
+        _page,
+        _limit,
+        _sort,
+      }),
+    }).json(res);
+  }
 }
 
 module.exports = new StatisticalController();

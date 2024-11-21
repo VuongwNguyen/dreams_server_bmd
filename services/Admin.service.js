@@ -67,6 +67,11 @@ class AdminService {
         message: "Email is already exist",
         code: 400,
       });
+    } else if (checkEmail && checkEmail?.role === "superadmin") {
+      throw new ErrorResponse({
+        message: "Email is already exist",
+        code: 400,
+      });
     } else {
       const password = Math.random().toString(36).slice(-8);
       const salt = bcrypt.genSaltSync(10);

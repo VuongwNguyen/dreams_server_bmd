@@ -15,19 +15,12 @@ app.use(helmet());
 app.use(cors());
 app.use(logger("dev"));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 // routes
 app.use("/api", require("./routes"));
-app.get("/", async (req, res) => {
-  res.json({
-    status: true,
-    message: "Welcome to the API of Dreams Social Network",
-    data: null,
-  });
-});
 
 // test
 app.get("/", (req, res) => {

@@ -28,6 +28,11 @@ const AccountSchema = new Schema(
       type: String,
       required: false,
     },
+    toggleNotification:{
+      type: String,
+      require:false,
+      default:true
+    },
     isVerified: {
       type: Boolean,
       required: false,
@@ -85,6 +90,10 @@ const AccountSchema = new Schema(
         required: false,
       },
     ],
+    partner_id: {
+      type: String,
+      required: false,
+    },
   },
   {
     timestamps: true,

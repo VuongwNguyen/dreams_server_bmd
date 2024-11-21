@@ -134,6 +134,22 @@ class AccountController {
       message: "get stream token",
     }).json(res);
   }
+
+  async authThirdPartner(req, res) {
+    const { email, first_name, last_name, avatar, partner_id, password } =
+      req.body;
+    new SuccessfullyReponse({
+      data: await AccountService.authThirdPartner({
+        email,
+        first_name,
+        last_name,
+        avatar,
+        partner_id,
+        password,
+      }),
+      message: "auth third partner success",
+    }).json(res);
+  }
 }
 
 module.exports = new AccountController();

@@ -195,6 +195,12 @@ class SearchService {
         },
       },
       {
+        $skip: (+_page - 1) * +_limit,
+      },
+      {
+        $limit: +_limit,
+      },
+      {
         $lookup: {
           from: "accounts",
           localField: "account_id",

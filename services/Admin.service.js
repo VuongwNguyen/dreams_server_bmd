@@ -27,12 +27,6 @@ class AdminService {
         code: 400,
       });
 
-    if (!user.isVerified)
-      throw new ErrorResponse({
-        message: "User is not verified",
-        code: 401,
-      });
-
     const tokens = generateTokens({ user_id: user._id });
 
     return {
@@ -172,7 +166,6 @@ class AdminService {
       message: "Revoke admin successfully",
     };
   }
-    
 }
 
 module.exports = new AdminService();

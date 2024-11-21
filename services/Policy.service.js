@@ -27,14 +27,14 @@ class PolicyService {
     return await Policy.find();
   }
 
-  async deletePolicy({ policy_id = "", children_id = "" }) {
+  async deletePolicy({ policy_id = "" }) {
     if (!policy_id)
       throw new ErrorResponse({
         message: "Policy ID is required",
         code: 400,
       });
 
-    const policy = await Policy.findById(policy_id);
+    const policy = await Policy.findByIdAndDelete(policy_id);
 
     if (!policy)
       throw new ErrorResponse({
@@ -42,18 +42,7 @@ class PolicyService {
         code: 400,
       });
 
-    if (children_id) {
-      const child = policy.children.find((child) => child._id == children_id);
-      if (!child)
-        throw new ErrorResponse({
-          message: "Child not found",
-          code: 400,
-        });
-
-      policy.children.pull({ _id: children_id });
-    }
-
-    return await policy.save();
+    return policy;
   }
 }
 

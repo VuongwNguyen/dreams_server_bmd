@@ -23,8 +23,8 @@ class PolicyController {
   }
 
   async deletePolicy(req, res) {
-    const { policy_id, children_id } = req.body;
-    await PolicyService.deletePolicy({ policy_id, children_id });
+    const { policy_id } = req.body;
+    await PolicyService.deletePolicy({ policy_id });
     return new SuccessfullyReponse({
       data: null,
       message: "Delete policy successfully",

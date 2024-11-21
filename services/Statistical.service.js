@@ -124,7 +124,6 @@ class StatisticalService {
   }
 
   async getPostsByUser({ user_id, _page = 1, _limit = 10, _sort = -1 }) {
-    console.log(user_id);
     _page = parseInt(_page);
     _limit = parseInt(_limit);
     _sort = parseInt(_sort);

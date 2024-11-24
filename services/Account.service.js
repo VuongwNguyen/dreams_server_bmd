@@ -343,6 +343,7 @@ class AccountService {
 
   async authThirdPartner({
     email,
+    phone,
     first_name,
     last_name,
     avatar,
@@ -352,11 +353,13 @@ class AccountService {
     let user = await Account.findOne({ email, partner_id });
 
     if (!user) {
+      if (avatar) user.avatar.url = avatar;
+
       user = await Account.create({
         email,
+        phone,
         first_name,
         last_name,
-        avatar,
         partner_id,
         role: "user",
         password,
@@ -365,7 +368,7 @@ class AccountService {
       await streamClient.upsertUser({
         name: `${user.first_name} ${user.last_name}`,
         id: user._id.toString(),
-        role: "user",
+        role: "admin",
       });
 
       const payload = {

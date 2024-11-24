@@ -353,8 +353,6 @@ class AccountService {
     let user = await Account.findOne({ email, partner_id });
 
     if (!user) {
-      if (avatar) user.avatar.url = avatar;
-
       user = await Account.create({
         email,
         phone,
@@ -364,6 +362,10 @@ class AccountService {
         role: "user",
         password,
       });
+
+      if (avatar) user.avatar.url = avatar;
+
+      await user.save();
 
       await streamClient.upsertUser({
         name: `${user.first_name} ${user.last_name}`,

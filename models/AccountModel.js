@@ -22,7 +22,7 @@ const AccountSchema = new Schema(
     },
     password: {
       type: String,
-      required: true,
+      // required: true,
     },
     fcm_token: {
       type: String,

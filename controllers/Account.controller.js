@@ -136,8 +136,15 @@ class AccountController {
   }
 
   async authThirdPartner(req, res) {
-    const { email,phone, first_name, last_name, avatar, partner_id, password } =
-      req.body;
+    const {
+      email,
+      phone,
+      first_name,
+      last_name,
+      avatar,
+      partner_id,
+      password,
+    } = req.body;
     new SuccessfullyReponse({
       data: await AccountService.authThirdPartner({
         email,

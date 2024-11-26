@@ -13,7 +13,7 @@ class PolicyService {
       const policy = await Policy.findById(policy_id);
       if (policy) {
         policy.title = title;
-        policy.children = children.map((child) => child);
+        policy.children = children;
         return await policy.save();
       }
     } else {

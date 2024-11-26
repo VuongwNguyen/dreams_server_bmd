@@ -13,14 +13,12 @@ class PolicyService {
       const policy = await Policy.findById(policy_id);
       if (policy) {
         policy.title = title;
-        policy.children = children.map((child) => ({ title: child }));
+        policy.children = children.map((child) => child);
         return await policy.save();
       }
+    } else {
+      return await Policy.create({ title, children });
     }
-
-    children = children.map((child) => ({ title: child }));
-
-    return await Policy.create({ title, children });
   }
 
   async getAllPolicies() {

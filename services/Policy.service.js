@@ -10,15 +10,17 @@ class PolicyService {
       });
 
     if (policy_id) {
-      const policy = await Policy.findByIdAndUpdate(policy_id, {
-        title,
-        children,
-      });
+      const policy = await Policy.findById(policy_id);
+
       if (!policy)
         throw new ErrorResponse({
           message: "Policy not found",
           code: 400,
         });
+      policy.title = title;
+      policy.children = children.map((child) => ({ title: child }));
+      await policy.save({ new: true });
+
       return { data: policy, message: "Update policy successfully" };
     } else {
       const policy = await Policy.create({ title, children });

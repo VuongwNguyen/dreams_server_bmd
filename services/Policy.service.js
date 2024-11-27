@@ -18,12 +18,18 @@ class PolicyService {
           code: 400,
         });
       policy.title = title;
-      policy.children = children.map((child) => ({ title: child }));
+      policy.children = children.map((child) => {
+        return { title: child };
+      });
       await policy.save({ new: true });
 
       return { data: policy, message: "Update policy successfully" };
     } else {
+      children = children.map((child) => {
+        return { title: child };
+      });
       const policy = await Policy.create({ title, children });
+
       return { data: policy, message: "Create policy successfully" };
     }
   }

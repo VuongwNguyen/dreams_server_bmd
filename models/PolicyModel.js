@@ -6,7 +6,15 @@ const PolicySchema = new Schema(
       type: String,
       required: true,
     },
-    children: [String],
+    children: [
+      {
+        _id: {
+          type: Schema.Types.ObjectId,
+          default: new mongoose.Types.ObjectId(),
+        },
+        title: String,
+      },
+    ],
   },
   { timestamps: true }
 );

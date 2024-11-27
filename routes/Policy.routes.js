@@ -6,7 +6,7 @@ const asyncHandler = require("../core/asyncHandler");
 
 router.use(verifyUser);
 router.post(
-  "/upsert-policy",
+  "/upsert-policy", 
   verifyAdmin,
   asyncHandler(PolicyController.upSertPolicy)
 );

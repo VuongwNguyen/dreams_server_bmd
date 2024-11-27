@@ -3,12 +3,16 @@ const PolicyService = require("../services/Policy.service");
 
 class PolicyController {
   async upSertPolicy(req, res) {
-    const { title, children } = req.body;
+    const { policy_id, title, children } = req.body;
 
-    const policy = await PolicyService.upSertPolicy({ title, children });
+    const policy = await PolicyService.upSertPolicy({
+      policy_id,
+      title,
+      children,
+    });
     return new SuccessfullyReponse({
-      data: policy,
-      message: "Create policy successfully",
+      data: policy.data,
+      message: policy.message,
     }).json(res);
   }
 

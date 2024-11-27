@@ -3,10 +3,10 @@ const PolicyService = require("../services/Policy.service");
 
 class PolicyController {
   async upSertPolicy(req, res) {
-    const { policy_id, title, children } = req.body;
+    const { _id, title, children } = req.body;
 
     const policy = await PolicyService.upSertPolicy({
-      policy_id,
+      policy_id: _id,
       title,
       children,
     });

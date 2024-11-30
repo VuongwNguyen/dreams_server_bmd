@@ -1425,8 +1425,8 @@ class PostService {
     images = [],
     title,
   }) {
-    const user = Account.findById(user_id);
-    const post = Post.findById(post_id);
+    const user = await Account.findById(user_id).lean();
+    const post = await Post.findById(post_id);
 
     if (!post)
       throw new ErrorResponse({
@@ -1468,13 +1468,13 @@ class PostService {
       arrHashtags.push(tag._id);
     }
 
-    post.content = content;
-    post.title = title;
-    post.hashtags = arrHashtags;
-    post.images = images;
-    post.videos = videos;
-    post.privacy_status = privacy_status;
-    post.tagUsers = tagUsers;
+    if (content) post.content = content;
+    if (title) post.title = title;
+    if (hashtags) post.hashtags = arrHashtags;
+    if (images) post.images = images;
+    if (videos) post.videos = videos;
+    if (privacy_status) post.privacy_status = privacy_status;
+    if (tagUsers) post.tagUsers = tagUsers;
 
     await post.save({ new: true });
 
@@ -1501,7 +1501,7 @@ class PostService {
       });
     }
 
-    await post.remove();
+    post.delete();
 
     return {
       post,

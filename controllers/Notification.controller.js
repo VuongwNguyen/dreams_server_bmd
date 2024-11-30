@@ -26,21 +26,12 @@ class NotificationController {
     }).json(res);
   }
 
-  async getStatusNotification(req, res, next) {
-    const { user_id } = req.user;
-    const status = await NotificationService.getStatusNotification({ user_id });
-    return new SuccessfullyReponse({
-      data: status,
-      message: status.message,
-    }).json(res);
-  }
-
   async toggleNotification(req, res, next) {
     const { user_id } = req.user;
     const status = await NotificationService.toggleNotification({ user_id });
     return new SuccessfullyReponse({
-      data: status,
-      message: "Toggle notification successfully",
+      data: status.toggleNotification,
+      message: status.message,
     }).json(res);
   }
 }

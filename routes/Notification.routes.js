@@ -14,13 +14,8 @@ router.put(
   asyncHandler(NotificationController.detailNotification)
 );
 
-router.get(
-  "/notification/status",
-  asyncHandler(NotificationController.getStatusNotification)
-);
-
 router.put(
-  "/notification/toggle",
+  "/  ",
   asyncHandler(NotificationController.toggleNotification)
 );
 

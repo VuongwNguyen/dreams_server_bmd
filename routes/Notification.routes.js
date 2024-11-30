@@ -15,7 +15,7 @@ router.put(
 );
 
 router.put(
-  "/  ",
+  "/toggle-notification",
   asyncHandler(NotificationController.toggleNotification)
 );
 

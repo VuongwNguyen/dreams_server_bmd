@@ -709,7 +709,6 @@ class PostService {
         post.isSelf = true;
       }
     });
-    console.log(totalRecords);
 
     return {
       list: posts,
@@ -718,7 +717,7 @@ class PostService {
         currentPage: +_page,
         limit: +_limit,
         hasNext: posts.length === +_limit,
-        hasPrevious: _page > 1,
+        hasPrevious: +_page > 1,
       },
     };
   }
@@ -803,9 +802,22 @@ class PostService {
     const user = await Account.findOne({ _id: user_id }).lean();
     const userView = await Account.findOne({ _id: user_id_view }).lean();
 
+    const privacy_status =
+      user_id === user_id_view ? ["public", "private"] : ["public"];
+
     const totalRecords = await Post.countDocuments({
-      account_id: user_id_view,
       $and: [
+        {
+          $or: [
+            { account_id: new mongoose.Types.ObjectId(user_id_view) },
+            {
+              tagUsers: new mongoose.Types.ObjectId(
+                user_id === user_id_view ? user_id : user_id_view
+              ),
+            },
+          ],
+        },
+        { privacy_status: { $in: privacy_status } },
         {
           $or: [{ violateion: { $exists: false } }, { violateion: null }],
         },
@@ -818,18 +830,21 @@ class PostService {
         code: 400,
       });
 
-    const privacy_status =
-      user_id === user_id_view ? ["public", "private"] : ["public"];
-
     const posts = await Post.aggregate([
       {
         $match: {
-          $or: [
-            { account_id: new mongoose.Types.ObjectId(user_id_view) },
-            { tagUsers: { $in: [new mongoose.Types.ObjectId(user_id)] } },
-          ],
-          privacy_status: { $in: privacy_status },
           $and: [
+            {
+              $or: [
+                { account_id: new mongoose.Types.ObjectId(user_id_view) },
+                {
+                  tagUsers: new mongoose.Types.ObjectId(
+                    user_id === user_id_view ? user_id : user_id_view
+                  ),
+                },
+              ],
+            },
+            { privacy_status: { $in: privacy_status } },
             {
               $or: [{ violateion: { $exists: false } }, { violateion: null }],
             },
@@ -1087,9 +1102,9 @@ class PostService {
       list: posts,
       page: {
         maxPage: Math.ceil(totalRecords / _limit),
-        currentPage: _page,
-        limit: _limit,
-        hasNext: posts.length === _limit,
+        currentPage: +_page,
+        limit: +_limit,
+        hasNext: posts.length === +_limit,
         hasPrevious: _page > 1,
       },
     };

@@ -303,6 +303,7 @@ class AccountService {
         avatar: 1,
         phone: 1,
         email: 1,
+        toggleNotification: 1,
       }
     );
 
@@ -350,7 +351,7 @@ class AccountService {
     partner_id,
     password = null,
   }) {
-    let user = await Account.findOne({ email, partner_id });
+    let user = await Account.findOne({ email });
 
     if (!user) {
       user = await Account.create({
@@ -361,6 +362,7 @@ class AccountService {
         partner_id,
         role: "user",
         password,
+        verified: true,
       });
 
       if (avatar) user.avatar.url = avatar;
@@ -386,6 +388,9 @@ class AccountService {
 
       return tokens;
     }
+
+    if (!user.partner_id) user.partner_id = partner_id;
+    await user.save();
 
     const payload = {
       user_id: user._id,

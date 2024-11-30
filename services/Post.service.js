@@ -1398,6 +1398,101 @@ class PostService {
       message: "Post has been suspended",
     };
   }
+
+  async editPost({
+    user_id,
+    post_id,
+    content,
+    privacy_status = "",
+    tagUsers = [],
+    hashtags = [],
+    videos = [],
+    images = [],
+    title,
+  }) {
+    const user = Account.findById(user_id);
+    const post = Post.findById(post_id);
+
+    if (!post)
+      throw new ErrorResponse({
+        message: "Post not found",
+        code: 400,
+      });
+
+    if (post.children_post_id)
+      throw new ErrorResponse({
+        message: "Do not edit shared post",
+        code: 400,
+      });
+
+    if (user._id.toString() !== post.account_id.toString())
+      throw new ErrorResponse({
+        message: "You do not have permission edit post",
+        code: 401,
+      });
+
+    const arrHashtags = [];
+
+    if (Array.isArray(hashtags)) {
+      for (const hashtag of hashtags) {
+        const tag = await Hashtag.findOneAndUpdate(
+          { title: hashtag },
+          { title: hashtag },
+          { upsert: true, new: true }
+        );
+
+        arrHashtags.push(tag._id);
+      }
+    } else {
+      const tag = await Hashtag.findOneAndUpdate(
+        { title: hashtags },
+        { title: hashtags },
+        { upsert: true, new: true }
+      );
+
+      arrHashtags.push(tag._id);
+    }
+
+    post.content = content;
+    post.title = title;
+    post.hashtags = arrHashtags;
+    post.images = images;
+    post.videos = videos;
+    post.privacy_status = privacy_status;
+    post.tagUsers = tagUsers;
+
+    await post.save({ new: true });
+
+    return {
+      post,
+      message: "Post has been updated",
+    };
+  }
+
+  async removePost({ user_id, post_id }) {
+    const post = await Post.findById(post_id);
+
+    if (!post) {
+      throw new ErrorResponse({
+        message: "Post not found",
+        code: 404,
+      });
+    }
+
+    if (post.account_id.toString() !== user_id) {
+      throw new ErrorResponse({
+        message: "You are not authorized to remove this post",
+        code: 401,
+      });
+    }
+
+    await post.remove();
+
+    return {
+      post,
+      message: "Post has been removed",
+    };
+  }
 }
 
 module.exports = new PostService();

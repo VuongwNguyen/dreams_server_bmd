@@ -200,6 +200,7 @@ class NotificationService {
 
     return {
       toggleNotification: user.toggleNotification,
+      message: 'Get status notification successfully'
     };
   }
 

@@ -188,22 +188,7 @@ class NotificationService {
     notification.is_read = true;
     return await notification.save();
   }
-
-  async getStatusNotification({ user_id }) {
-    const user = await Account.findById(user_id);
-
-    if (!user)
-      throw new ErrorResponse({
-        message: "User not found",
-        status: 400,
-      });
-
-    return {
-      toggleNotification: user.toggleNotification,
-      message: 'Get status notification successfully'
-    };
-  }
-
+  
   async toggleNotification({ user_id }) {
     const user = await Account.findById(user_id);
 

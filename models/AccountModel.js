@@ -28,10 +28,10 @@ const AccountSchema = new Schema(
       type: String,
       required: false,
     },
-    toggleNotification:{
-      type: String,
-      require:false,
-      default:true
+    toggleNotification: {
+      type: Boolean,
+      require: false,
+      default: true,
     },
     isVerified: {
       type: Boolean,

@@ -144,6 +144,11 @@ class RoomService {
           },
         },
         {
+          $addFields: {
+            snapshot: "$members",
+          },
+        },
+        {
           $lookup: {
             from: "messages",
             localField: "_id",
@@ -244,6 +249,52 @@ class RoomService {
         },
         {
           $limit: _limit,
+        },
+        {
+          $addFields: {
+            relevant_user: {
+              $arrayElemAt: [
+                {
+                  $filter: {
+                    input: "$snapshot",
+                    as: "member",
+                    cond: {
+                      $eq: ["$$member.account_id", new ObjectId(user_id)],
+                    },
+                  },
+                },
+                0,
+              ],
+            },
+          },
+        },
+        {
+          $addFields: {
+            message: {
+              $cond: {
+                if: {
+                  $gte: [
+                    "$message.send_at",
+                    "$relevant_user.delete_messages_at",
+                  ],
+                },
+                then: "$message",
+                else: null,
+              },
+            },
+          },
+        },
+        {
+          $match: {
+            $or: [
+              {
+                message: { $ne: null },
+              },
+              {
+                is_group: true,
+              },
+            ],
+          },
         },
         {
           $project: {

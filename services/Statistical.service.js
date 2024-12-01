@@ -81,6 +81,22 @@ class StatisticalService {
         },
       },
       {
+        $lookup: {
+          from: "reports",
+          localField: "_id",
+          foreignField: "reported_content_id",
+          as: "count_reports",
+        },
+      },
+      {
+        $lookup: {
+          from: "reports",
+          localField: "posteds._id",
+          foreignField: "reported_content_id",
+          as: "count_post_reports",
+        },
+      },
+      {
         $addFields: {
           count_follower: {
             $size: "$followers",
@@ -99,6 +115,12 @@ class StatisticalService {
       },
       {
         $project: {
+          count_report: {
+            $size: "$count_reports",
+          },
+          count_post_report: {
+            $size: "$count_post_reports",
+          },
           count_follower: 1,
           count_post: 1,
           fullname: {

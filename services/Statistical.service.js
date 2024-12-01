@@ -98,11 +98,81 @@ class StatisticalService {
       },
       {
         $addFields: {
+          count_pending_post_report: {
+            $filter: {
+              input: "$count_post_reports",
+              as: "temp",
+              cond: { $eq: ["$$temp.status", "pending"] },
+            },
+          },
+          count_resolved_post_report: {
+            $filter: {
+              input: "$count_post_reports",
+              as: "temp",
+              cond: { $eq: ["$$temp.status", "resolved"] },
+            },
+          },
+          count_rejected_post_report: {
+            $filter: {
+              input: "$count_post_reports",
+              as: "temp",
+              cond: { $eq: ["$$temp.status", "rejected"] },
+            },
+          },
+          count_pending_account_report: {
+            $filter: {
+              input: "$count_reports",
+              as: "temp",
+              cond: { $eq: ["$$temp.status", "pending"] },
+            },
+          },
+          count_resolved_account_report: {
+            $filter: {
+              input: "$count_reports",
+              as: "temp",
+              cond: { $eq: ["$$temp.status", "resolved"] },
+            },
+          },
+          count_rejected_account_report: {
+            $filter: {
+              input: "$count_reports",
+              as: "temp",
+              cond: { $eq: ["$$temp.status", "rejected"] },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
           count_follower: {
             $size: "$followers",
           },
           count_post: {
             $size: "$posteds",
+          },
+          count_total_report: {
+            $sum: [
+              { $size: "$count_reports" },
+              { $size: "$count_post_reports" },
+            ],
+          },
+          count_pending_report: {
+            $sum: [
+              { $size: "$count_pending_post_report" },
+              { $size: "$count_pending_account_report" },
+            ],
+          },
+          count_rejected_report: {
+            $sum: [
+              { $size: "$count_rejected_post_report" },
+              { $size: "$count_rejected_account_report" },
+            ],
+          },
+          count_resolved_report: {
+            $sum: [
+              { $size: "$count_resolved_post_report" },
+              { $size: "$count_resolved_account_report" },
+            ],
           },
         },
       },
@@ -115,12 +185,10 @@ class StatisticalService {
       },
       {
         $project: {
-          count_report: {
-            $size: "$count_reports",
-          },
-          count_post_report: {
-            $size: "$count_post_reports",
-          },
+          count_total_report: 1,
+          count_pending_report: 1,
+          count_rejected_report: 1,
+          count_resolved_report: 1,
           count_follower: 1,
           count_post: 1,
           fullname: {

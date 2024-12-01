@@ -12,6 +12,7 @@ const {
 router.use(verifyUser);
 router.get("/", asyncHandler(MessageController.getMessages));
 router.post("/", asyncHandler(MessageController.createMessage));
+router.delete("/:room_id", asyncHandler(MessageController.deleteMessage));
 router.post(
   "/upload-images",
   uploader.fields([{ name: "images" }]),

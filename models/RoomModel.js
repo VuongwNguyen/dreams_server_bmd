@@ -11,6 +11,10 @@ const MembersSchema = new Schema({
     type: Date,
     default: Date.now,
   },
+  delete_messages_at: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const RoomSchema = new Schema(

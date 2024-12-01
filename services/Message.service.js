@@ -3,6 +3,7 @@ const Room = require("../models/RoomModel");
 const { ErrorResponse } = require("../core/reponseHandle");
 const mongoose = require("mongoose");
 const SendNotificationService = require("./SendNotification.service");
+const { Account } = require("../models");
 const ObjectId = mongoose.Types.ObjectId;
 
 class MessageService {
@@ -62,12 +63,23 @@ class MessageService {
         throw new ErrorResponse({ message: "room not found", code: 400 });
       }
 
+      const user = room.members.find(
+        (mem) => mem.account_id.toString() === user_id
+      );
+
+      if (!user) {
+        throw new ErrorResponse({ message: "user not found", code: 400 });
+      }
+
       const total = await Message.countDocuments({ room_id: room_id });
       const skip = (_page - 1) * _limit + _offset;
       const messages = await Message.aggregate([
         {
           $match: {
             room_id: new ObjectId(room_id),
+            send_at: {
+              $gt: user.delete_messages_at,
+            },
           },
         },
         {
@@ -242,6 +254,29 @@ class MessageService {
     } else {
       await SendNotificationService.sendNotification(user_ids, message);
     }
+  }
+
+  async deleteMessage(user_id, room_id) {
+    const room = await Room.findOne({ _id: room_id });
+
+    if (!room) {
+      throw new ErrorResponse({ message: "Room not found", code: 400 });
+    }
+
+    const user = await Account.findOne({ _id: user_id });
+
+    if (!user) {
+      throw new ErrorResponse({
+        message: "User not found",
+        code: 400,
+      });
+    }
+
+    const member = room.members.find(
+      (mem) => mem.account_id.toString() === user_id
+    );
+    member.delete_messages_at = Date.now();
+    await room.save();
   }
 }
 

@@ -18,6 +18,17 @@ class MessageController {
     }).json(res);
   }
 
+  async deleteMessage(req, res, next) {
+    const { room_id } = req.params;
+    const user_id = req.user.user_id;
+
+    await MessageService.deleteMessage(user_id, room_id);
+
+    new SuccessfullyReponse({
+      message: "delete messages success",
+    }).json(res);
+  }
+
   async getMessages(req, res, next) {
     const user_id = req.user.user_id;
     const { _page, _limit, room_id, _offset } = req.query;

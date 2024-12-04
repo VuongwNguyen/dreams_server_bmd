@@ -158,6 +158,14 @@ class AccountController {
       message: "auth third partner success",
     }).json(res);
   }
+
+  async authGithub(req, res) {
+    const { code } = req.query;
+    new SuccessfullyReponse({
+      data: await AccountService.authGithub({ code }),
+      message: "auth github success",
+    }).json(res);
+  }
 }
 
 module.exports = new AccountController();

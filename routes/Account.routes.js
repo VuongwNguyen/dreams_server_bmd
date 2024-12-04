@@ -38,5 +38,10 @@ router.post(
   "/auth-third-partner",
   asyncHandler(AccountController.authThirdPartner)
 );
+router.post(
+  "/auth-github",
+  asyncHandler(AccountController.authGithub)
+);
+
 
 module.exports = router;

@@ -38,7 +38,7 @@ router.post(
   "/auth-third-partner",
   asyncHandler(AccountController.authThirdPartner)
 );
-router.post(
+router.get(
   "/auth-github",
   asyncHandler(AccountController.authGithub)
 );

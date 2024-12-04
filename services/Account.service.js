@@ -485,6 +485,8 @@ class AccountService {
       user_id: user._id,
       refreshToken: tokens.refreshToken,
     });
+
+    return tokens;
   }
 }
 

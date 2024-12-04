@@ -405,6 +405,87 @@ class AccountService {
 
     return tokens;
   }
+  async authGithub({ code }) {
+    const axios = require("axios");
+    const { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET } = process.env;
+
+    if (!code) throw new ErrorResponse({ message: "Invalid code", code: 400 });
+
+    const tokenResponse = await axios.post(
+      "https://github.com/login/oauth/access_token",
+      {
+        client_id: GITHUB_CLIENT_ID,
+        client_secret: GITHUB_CLIENT_SECRET,
+        code: code,
+      },
+      { Headers: { Accept: "application/json" } }
+    );
+
+    const queryString = tokenResponse.data;
+
+    const params = new URLSearchParams(queryString);
+
+    // Trích xuất các giá trị
+    const accessToken = params.get("access_token");
+
+    if (!accessToken)
+      throw new ErrorResponse({ message: "Invalid code", code: 400 });
+
+    // (Optional) Lấy thông tin người dùng từ GitHub
+    const userResponse = await axios.get("https://api.github.com/user", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    const userData = userResponse.data;
+
+    let user = await Account.findOne({ email: userData.email });
+
+    if (!user) {
+      user = await Account.create({
+        email: userData.email,
+        first_name: userData.name.split(" ")[0],
+        last_name: userData.name.split(" ")[1],
+        role: "user",
+        verified: true,
+        avatar: {
+          url: userData.avatar_url,
+        },
+        partner_id: userData.id,
+      });
+
+      await streamClient.upsertUser({
+        name: `${user.first_name} ${user.last_name}`,
+        id: user._id.toString(),
+        role: "admin",
+      });
+
+      const payload = {
+        user_id: user._id,
+      };
+
+      const tokens = generateTokens(payload);
+
+      await keystoreService.upsertKeyStore({
+        user_id: user._id,
+        refreshToken: tokens.refreshToken,
+      });
+
+      return tokens;
+    }
+
+    const payload = {
+      user_id: user._id,
+    };
+
+    const tokens = generateTokens(payload);
+
+    await keystoreService.upsertKeyStore({
+      user_id: user._id,
+      refreshToken: tokens.refreshToken,
+    });
+  }
 }
 
 module.exports = new AccountService();

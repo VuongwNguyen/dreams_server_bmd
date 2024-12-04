@@ -440,6 +440,7 @@ class AccountService {
 
     const userData = userResponse.data;
 
+    console.log(userData);
     let user = await Account.findOne({ email: userData.email });
 
     if (!user) {

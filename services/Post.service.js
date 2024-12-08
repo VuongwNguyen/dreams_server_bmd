@@ -1259,6 +1259,9 @@ class PostService {
       },
     ]);
 
+    if (post[0].deleted)
+      throw new ErrorResponse({ message: "Post not found", code: 404 });
+
     const comments = await CommentService.getParentCommentByPostId({
       post_id,
       page: 1,

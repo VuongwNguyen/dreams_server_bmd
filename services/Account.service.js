@@ -440,7 +440,11 @@ class AccountService {
 
     const userData = userResponse.data;
 
-    console.log(userData);
+    if (!userData.email)
+      throw new ErrorResponse({
+        message: "Please public your email on github",
+        code: 403,
+      });
     let user = await Account.findOne({ email: userData.email });
 
     if (!user) {

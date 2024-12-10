@@ -47,7 +47,7 @@ class RoomController {
 
   async searchUser(req, res, next) {
     const { user_id } = req.user;
-    const { keyword, _page, _limit, is_group } = req.query;
+    const { keyword, _page, _limit, is_group, omit } = req.query;
 
     new SuccessfullyReponse({
       message: "get list success",
@@ -57,8 +57,45 @@ class RoomController {
         _limit,
         is_group,
         user_id,
+        omit,
       }),
     }).json(res);
+  }
+
+  async deleteRoom(req, res, next) {
+    const { room_id } = req.body;
+    const host = req.user.user_id;
+    await RoomService.deleteRoom({ room_id, host });
+
+    new SuccessfullyReponse({
+      message: "delete room success",
+    }).json(res);
+  }
+
+  async updateRoomName(req, res, next) {
+    const { room_id, name } = req.body;
+    const host = req.user.user_id;
+
+    await RoomService.updateRoomName({ room_id, name, host });
+
+    new SuccessfullyReponse({
+      message: "update name success",
+    }).json(res);
+  }
+
+  async deleteMemberInRoom(req, res, next) {
+    const { user_id, room_id } = req.body;
+    const host = req.user.user_id;
+
+    await RoomService.deleteUserInRoom({ user_id, room_id, host });
+
+    new SuccessfullyReponse({ message: "delete user success" }).json(res);
+  }
+
+  async addUsersInRoom(req, res, next) {
+    const { user_ids, room_id } = req.body;
+    await RoomService.addMembersToRoom({ user_ids, room_id });
+    new SuccessfullyReponse({ message: "add users success" }).json(res);
   }
 }
 

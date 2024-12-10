@@ -108,7 +108,7 @@ class SearchService {
           location: 1,
           information: 1,
           location: {
-            $ifNull: [{ $arrayElemAt: ["$infomation.value", 0] }, null],
+            $ifNull: [{ $arrayElemAt: ["$location.value", 0] }, null],
           },
         },
       },

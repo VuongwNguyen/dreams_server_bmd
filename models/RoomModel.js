@@ -50,7 +50,7 @@ RoomSchema.pre("save", async function (next) {
   }
 
   if (!this.name && this.members.length > 2) {
-    this.name = `${user.first_name} ${user.last_name}'s group`;
+    this.name = `Nhóm của ${user.first_name} ${user.last_name}`;
   }
 
   next();

@@ -10,5 +10,8 @@ router.post("/get-room", asyncHandler(RoomController.getRoom));
 router.post("/get-group", asyncHandler(RoomController.getGroup));
 router.get("/", asyncHandler(RoomController.getRooms));
 router.get("/search", asyncHandler(RoomController.searchUser));
+router.post("/update-name", asyncHandler(RoomController.updateRoomName));
+router.post("/delete-user", asyncHandler(RoomController.deleteMemberInRoom));
+router.post("/delete-room", asyncHandler(RoomController.deleteRoom));
 
 module.exports = router;

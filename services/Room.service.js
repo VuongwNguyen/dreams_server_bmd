@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
 const User = require("../models/AccountModel");
 const { io, usersOnline, sockets } = require("../socket");
+const { ErrorResponse } = require("../core/reponseHandle");
+const { Message } = require("../models");
 
 class RoomService {
   async createDirectRoom({ members = [], user_id }) {
@@ -96,7 +98,6 @@ class RoomService {
       createdAt: undefined,
       updatedAt: undefined,
       __v: undefined,
-      host: undefined,
     };
   }
 
@@ -433,6 +434,128 @@ class RoomService {
         limit: _limit,
       },
     };
+  }
+
+  async updateRoomName({ room_id, name, host }) {
+    const room = await Room.findOne({ _id: room_id });
+
+    if (!room) {
+      throw new ErrorResponse({ message: "room not found", status: 400 });
+    }
+
+    if (host !== room.host.toString()) {
+      throw new ErrorResponse({ message: "user id not allow", status: 400 });
+    }
+
+    room.name = name;
+    await room.save();
+    room.members.forEach((mem) => {
+      io.to(sockets[mem.account_id.toString()]).emit(
+        "update-room-name",
+        room_id,
+        name
+      );
+    });
+  }
+
+  async deleteRoom({ room_id, host }) {
+    const room = await Room.findOne({ _id: room_id });
+
+    if (host !== room.host.toString()) {
+      throw new ErrorResponse({ message: "user id not allow", status: 400 });
+    }
+
+    room.members.forEach((mem) => {
+      io.to(sockets[mem.account_id.toString()]).emit(
+        "delete-room",
+        room_id,
+        room.name
+      );
+    });
+
+    await Room.findByIdAndDelete(room_id);
+  }
+
+  async deleteUserInRoom({ user_id, room_id, host }) {
+    const room = await Room.findOne({ _id: room_id });
+
+    if (!room) {
+      throw new ErrorResponse({ message: "room not found", status: 400 });
+    }
+
+    if (host !== room.host.toString()) {
+      throw new ErrorResponse({ message: "user id not allow", status: 400 });
+    }
+
+    room.members.forEach((mem) => {
+      io.to(sockets[mem.account_id.toString()]).emit(
+        "remove-member",
+        room_id,
+        user_id,
+        room.name
+      );
+    });
+
+    room.members = room.members.filter(
+      (mem) => mem.account_id.toString() !== user_id
+    );
+
+    await room.save();
+  }
+
+  async addMembersToRoom({ user_ids, room_id }) {
+    const room = await Room.findOne({ _id: room_id });
+
+    if (!room) {
+      throw new ErrorResponse({ message: "room not found", code: 400 });
+    }
+
+    if (!(user_ids instanceof Array) && user_ids.length < 0) {
+      throw new ErrorResponse({ message: "data is empty", code: 400 });
+    }
+
+    user_ids = user_ids.map((id) => {
+      return {
+        account_id: id,
+        joined_at: Date.now(),
+        delete_messages_at: Date.now(),
+      };
+    });
+
+    await room.updateOne({
+      $push: {
+        members: {
+          $each: user_ids,
+        },
+      },
+    });
+
+    const messages = await Message.findOne({ room_id: room_id })
+      .populate("author", "first_name last_name avatar.url")
+      .sort({
+        send_at: -1,
+      })
+      .limit(1);
+
+    const roomUpdated = await Room.findOne({ _id: room_id });
+
+    roomUpdated.members = roomUpdated.members.map((item) => {
+      return {
+        _id: item.account_id._id,
+        avatar: item.account_id?.avatar?.url,
+        fullname: `${item.account_id?.first_name} ${item.account_id?.last_name}`,
+      };
+    });
+
+    delete room.__v;
+    delete room.createdAt;
+    delete room.updatedAt;
+
+    const message = messages?.[0];
+
+    user_ids.forEach((id) => {
+      io.to(sockets[id]).emit("update-room", message, room);
+    });
   }
 }
 

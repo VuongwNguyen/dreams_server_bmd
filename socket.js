@@ -104,20 +104,17 @@ io.on("connection", (socket) => {
       // emit event to room
       io.to(roomId).emit("message", message);
 
-      const offlines = [];
-
       // update room
       room.members.forEach((mem) => {
-        if (!sockets[mem._id.toString()]) {
-          offlines.push(mem._id.toString());
-        }
-
         io.to(sockets[mem?._id?.toString()]).emit("update-room", message, room);
       });
 
-      // handle push notification with offlines
-      offlines.length > 0 &&
-        (await MessageService.sendMessageNotification(offlines, room._id));
+      await MessageService.sendMessageNotification(
+        room.members.filter(
+          (mem) => mem?._id?.toString() !== usersOnline?.[socket.id]?.user_id
+        ),
+        room._id
+      );
     } catch (e) {
       console.log("message group: ", e);
     }

@@ -10,7 +10,7 @@ class StatisticalController {
   }
 
   async getCelebrities(req, res) {
-    const { _page, _limit, _sort, sort_type } = req.query;
+    const { _page, _limit, _sort, sort_type, ban } = req.query;
 
     new SuccessfullyReponse({
       message: "get celebrities success",
@@ -19,6 +19,7 @@ class StatisticalController {
         _limit,
         _sort,
         sort_type,
+        ban,
       }),
     }).json(res);
   }

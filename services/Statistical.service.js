@@ -25,17 +25,32 @@ class StatisticalService {
     _limit = 10,
     _sort = -1,
     sort_type = "celebrity",
+    ban = 0,
   }) {
     _page = parseInt(_page);
     _limit = parseInt(_limit);
     _sort = parseInt(_sort);
+    ban = parseInt(ban);
 
-    const skip = (_page - 1) * _limit;
-    const total = await User.countDocuments({ isJudged: { $eq: null } });
-
-    const sortStage = {
+    let sortStage = {
       $sort: {},
     };
+
+    let matchStage = {
+      isJudged: {
+        $eq: null,
+      },
+    };
+
+    if (ban === 1) {
+      matchStage = {
+        isJudged: {
+          $ne: null,
+        },
+      };
+    } else if (ban === 2) {
+      matchStage = {};
+    }
 
     switch (sort_type) {
       case "celebrity": {
@@ -56,13 +71,12 @@ class StatisticalService {
       }
     }
 
+    const skip = (_page - 1) * _limit;
+    const total = await User.countDocuments(matchStage);
+
     const users = await User.aggregate([
       {
-        $match: {
-          isJudged: {
-            $eq: null,
-          },
-        },
+        $match: matchStage,
       },
       {
         $lookup: {
@@ -197,6 +211,13 @@ class StatisticalService {
           email: 1,
           createdAt: 1,
           avatar: "$avatar.url",
+          isBanned: {
+            $cond: {
+              if: { $eq: ["$isJudged", null] },
+              then: false,
+              else: true,
+            },
+          },
         },
       },
     ]);

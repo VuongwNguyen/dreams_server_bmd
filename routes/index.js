@@ -19,7 +19,7 @@ router.use("/notify", require("./Notification.routes"));
 router.use("/room", require("./Room.routes"));
 router.use("/message", require("./Message.routes"));
 router.use("/test", require("./Test.routes"));
-router.use("/search", require("./Search.route"));
+router.use("/search", require("./Search.routes"));
 router.use("/admin", require("./Admin.routes"));
 router.use("/statistical", require("./Statistical.routes"));
 router.use("/policy", require("./Policy.routes"));

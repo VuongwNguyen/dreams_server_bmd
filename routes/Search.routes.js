@@ -2,7 +2,6 @@ const express = require("express");
 const { verifyUser } = require("../middlewares/verifyUser");
 const asyncHandler = require("../core/asyncHandler");
 const SearchControllers = require("../controllers/Search.controllers");
-const SearchService = require("../services/Search.service");
 const router = express.Router();
 
 router.use(verifyUser);

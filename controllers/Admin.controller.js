@@ -34,11 +34,23 @@ class AdminController {
       message: "Get admins successfully",
     }).json(res);
   }
-  
+
   async revokeAdmin(req, res) {
     const { user_id } = req.user;
     const { admin_id } = req.body;
     const data = await AdminService.revokeAdmin({ user_id, admin_id });
+    new SuccessfullyReponse({
+      message: data.message,
+    }).json(res);
+  }
+
+  async lockUnlockUser(req, res) {
+    const { user_id, date_of_judge, reason } = req.body;
+    const data = await AdminService.lockUnLockUser({
+      user_id,
+      date_of_judge,
+      reason,
+    });
     new SuccessfullyReponse({
       message: data.message,
     }).json(res);

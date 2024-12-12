@@ -7,6 +7,7 @@ const { Account } = require("./models");
 const User = require("./models/AccountModel");
 const Follow = require("./models/FollowModel");
 const Room = require("./models/RoomModel");
+require("dotenv").config();
 
 // const { Queue } = require("bullmq");
 

@@ -1,6 +1,6 @@
 const router = require("express").Router();
 
-const { verifyUser, verifySuperAdmin } = require("../middlewares/verifyUser");
+const { verifyUser, verifySuperAdmin, verifyAdmin } = require("../middlewares/verifyUser");
 
 const asyncHandler = require("../core/asyncHandler");
 const AdminController = require("../controllers/Admin.controller");
@@ -18,12 +18,19 @@ router.get(
   verifySuperAdmin,
   asyncHandler(AdminController.getAdmins)
 );
-
 router.put(
   "/revoke-admin",
   verifyUser,
   verifySuperAdmin,
   asyncHandler(AdminController.revokeAdmin)
 );
+router.put(
+  "/lock-unlock-user",
+  verifyUser,
+  verifyAdmin,
+  asyncHandler(AdminController.lockUnlockUser)
+);
+
+
 
 module.exports = router;

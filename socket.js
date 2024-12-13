@@ -127,7 +127,8 @@ io.on("connection", (socket) => {
         room.members.filter(
           (mem) => mem?._id?.toString() !== usersOnline?.[socket.id]?.user_id
         ),
-        room._id
+        room._id,
+        usersOnline[socket.id].user_id
       );
     } catch (e) {
       console.log("message group: ", e);

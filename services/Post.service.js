@@ -159,7 +159,7 @@ class PostService {
         },
       },
       {
-        $sort: { createdAt: -1, view_count: -1, like: -1 },
+        $sort: { view_count: -1, createdAt: -1, like: -1 },
       },
       {
         $skip: (+_page - 1) * +_limit,
@@ -315,6 +315,7 @@ class PostService {
                     $concat: ["$author.first_name", " ", "$author.last_name"],
                   },
                   avatar: "$author.avatar.url",
+                  isJudge: "$author.isJudge",
                 },
                 title: 1,
                 content: 1,
@@ -408,7 +409,7 @@ class PostService {
         post.isSelf = true;
       }
 
-      if (post?.childrenPost?.deleted) {
+      if (post?.childrenPost?.deleted || post.author.isJudge) {
         posts.splice(index, 1);
       }
     });
@@ -715,7 +716,7 @@ class PostService {
         post.isSelf = true;
       }
 
-      if (post?.childrenPost?.deleted) {
+      if (post?.childrenPost?.deleted || post.author.isJudge) {
         posts.splice(index, 1);
       }
     });
@@ -1108,9 +1109,9 @@ class PostService {
         post.isSelf = true;
       }
 
-      if (post?.childrenPost?.deleted) {
+      if (post?.childrenPost?.deleted|| post.author.isJudge) {
         posts.splice(index, 1);
-      }
+      } // Xóa bài chia sẽ nếu bài gốc bị xóa
     });
 
     return {
@@ -1274,7 +1275,7 @@ class PostService {
       },
     ]);
 
-    if (post[0].childrenPost[0]?.deleted) {
+    if (post[0].childrenPost[0]?.deleted|| post[0].author.isJudge) {
       post[0] = null;
     }
 

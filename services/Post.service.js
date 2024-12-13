@@ -1275,7 +1275,7 @@ class PostService {
       },
     ]);
 
-    if (post[0].childrenPost[0]?.deleted|| post[0].author.isJudge) {
+    if (post[0].childrenPost?.deleted|| post[0].author.isJudge) {
       post[0] = null;
     }
 

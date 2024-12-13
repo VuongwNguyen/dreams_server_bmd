@@ -171,6 +171,34 @@ class AdminService {
       message: "Revoke admin successfully",
     };
   }
+
+  async lockUnLockUser({ user_id, date_of_judge, reason }) {
+    const user = await Account.findById(user_id);
+
+    if (!user)
+      throw new ErrorResponse({
+        message: "User not found",
+        code: 400,
+      });
+
+    if (user.isJudged) {
+      user.isJudged = null;
+      user.save();
+      return {
+        message: "Unlock user successfully",
+      };
+    }
+    user.isJudged = {
+      judgeDate: date_of_judge,
+      reason,
+    };
+
+    user.save({ new: true });
+
+    return {
+      message: "Lock user successfully",
+    };
+  }
 }
 
 module.exports = new AdminService();

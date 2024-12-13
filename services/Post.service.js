@@ -1259,7 +1259,7 @@ class PostService {
       },
     ]);
 
-    if (post[0])
+    if (!post[0])
       throw new ErrorResponse({ message: "Post not found", code: 404 });
 
     const comments = await CommentService.getParentCommentByPostId({

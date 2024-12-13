@@ -324,6 +324,7 @@ class PostService {
                 videos: 1,
                 tagUsers: 1,
                 hashtags: 1,
+                deleted: 1,
               },
             },
           ],
@@ -402,9 +403,13 @@ class PostService {
       },
     ]);
 
-    posts.forEach((post) => {
+    posts.forEach((post, index) => {
       if (user_id == post.author._id.toString()) {
         post.isSelf = true;
+      }
+
+      if (post?.childrenPost?.deleted) {
+        posts.splice(index, 1);
       }
     });
 
@@ -626,6 +631,7 @@ class PostService {
                 videos: 1,
                 tagUsers: 1,
                 hashtags: 1,
+                deleted: 1,
               },
             },
           ],
@@ -704,9 +710,13 @@ class PostService {
       },
     ]);
 
-    posts.forEach((post) => {
+    posts.forEach((post, index) => {
       if (user_id == post.author._id.toString()) {
         post.isSelf = true;
+      }
+
+      if (post?.childrenPost?.deleted) {
+        posts.splice(index, 1);
       }
     });
 
@@ -1019,6 +1029,7 @@ class PostService {
                 videos: 1,
                 tagUsers: 1,
                 hashtags: 1,
+                deleted: 1,
               },
             },
           ],
@@ -1092,9 +1103,13 @@ class PostService {
       },
     ]);
 
-    posts.forEach((post) => {
+    posts.forEach((post, index) => {
       if (user_id == post.author._id.toString()) {
         post.isSelf = true;
+      }
+
+      if (post?.childrenPost?.deleted) {
+        posts.splice(index, 1);
       }
     });
 
@@ -1258,6 +1273,10 @@ class PostService {
         },
       },
     ]);
+
+    if (post[0].childrenPost[0]?.deleted) {
+      post[0] = null;
+    }
 
     if (!post[0])
       throw new ErrorResponse({ message: "Post not found", code: 404 });

@@ -186,7 +186,7 @@ class MessageService {
     }
   }
 
-  async sendMessageNotification(user_ids, room_id) {
+  async sendMessageNotification(user_ids, room_id, user_id) {
     const room = await Room.findOne({ _id: room_id });
     await room.populate("members.account_id", "first_name last_name");
 
@@ -216,6 +216,8 @@ class MessageService {
           : `${room.members?.[1]?.account_id?.first_name} ${room.members?.[1]?.account_id?.last_name}`;
     }
 
+    const user = await Account.findOne({ _id: user_id });
+
     const message = {
       data: {
         chat: JSON.stringify(
@@ -234,6 +236,7 @@ class MessageService {
           : "Đã gửi " + messages[0].images.length + " ảnh",
         type: "message",
         unique_id: room._id.toString(),
+        avatar: user?.avatar?.url,
         info: JSON.stringify({
           is_group: room.is_group,
           participant: !room.is_group

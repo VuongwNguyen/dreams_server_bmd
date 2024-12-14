@@ -325,6 +325,7 @@ class AccountService {
   }
 
   async suspendUser({ user_id, judgeDate, reason }) {
+    console.log(user_id, judgeDate, reason);
     const user = await Account.findOne({ _id: user_id });
 
     if (!user) {
@@ -451,7 +452,7 @@ class AccountService {
       user = await Account.create({
         email: userData.email,
         first_name: userData.name.split(" ")[0],
-        last_name: userData.name.split(" ")[1],
+        last_name: userData.name.split(" ")[1] || userData.name.split(" ")[0],
         role: "user",
         verified: true,
         avatar: {

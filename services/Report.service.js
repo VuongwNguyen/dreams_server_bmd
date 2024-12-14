@@ -167,6 +167,7 @@ class ReportService {
           description: 1,
           date_of_judge: 1,
           createdAt: 1,
+          updatedAt: 1,
           reported_user: {
             _id: 1,
             fullname: {
@@ -285,7 +286,7 @@ class ReportService {
       report.status = status;
     } else if (type === "user" && status === "resolved") {
       await AccountService.suspendUser({
-        user_id: content_id,
+        user_id: content_id.toString(),
         judgeDate: date_of_judge,
         reason,
       });

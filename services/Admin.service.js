@@ -83,6 +83,7 @@ class AdminService {
         last_name,
         password: hashPassword,
         role: "admin",
+        verified: true,
       });
 
       await sendmail(

@@ -5,7 +5,7 @@ class MapCode {
 
   set(key, value) {
     console.log(key, value);
-    const date = Date.now() + 10 * 60 * 1000; 
+    const date = Date.now() + 10 * 60 * 1000;  // expires in 10 minutes
     this.map.set(key, { value, expiresIn: date });
   }
 

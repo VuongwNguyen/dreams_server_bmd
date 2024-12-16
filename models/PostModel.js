@@ -31,7 +31,7 @@ const PostSchema = new Schema(
       {
         type: {
           url: { type: String, required: true },
-          public_id: { type: String, required: true },
+          public_id: { type: String, required: false },
         },
         required: false,
       },
@@ -40,7 +40,7 @@ const PostSchema = new Schema(
       {
         type: {
           url: { type: String, required: true },
-          public_id: { type: String, required: true },
+          public_id: { type: String, required: false },
         },
         required: false,
       },

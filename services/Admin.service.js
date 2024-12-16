@@ -5,6 +5,7 @@ const { generateTokens } = require("./token.service");
 const sendmail = require("../mail/sendmail");
 const SendSecretPassword = require("../mail/option/SendSecretPassword");
 const SendNotifyMakeAdmin = require("../mail/option/SendNotifyMakeAdmin");
+const AccountService = require("./Account.service");
 
 class AdminService {
   async loginAdmin({ email, password }) {
@@ -189,10 +190,7 @@ class AdminService {
         message: "Unlock user successfully",
       };
     }
-    user.isJudged = {
-      judgeDate: date_of_judge,
-      reason,
-    };
+    AccountService.suspendUser({ user_id, judgeDate: date_of_judge, reason });
 
     user.save({ new: true });
 

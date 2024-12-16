@@ -1109,7 +1109,7 @@ class PostService {
         post.isSelf = true;
       }
 
-      if (post?.childrenPost?.deleted|| post.author.isJudge) {
+      if (post?.childrenPost?.deleted || post.author.isJudge) {
         posts.splice(index, 1);
       } // Xóa bài chia sẽ nếu bài gốc bị xóa
     });
@@ -1142,7 +1142,7 @@ class PostService {
         $lookup: {
           from: "accounts",
           localField: "account_id",
-          foreignField: "_id", // trường nối
+          foreignField: "_id",
           as: "author",
         },
       },
@@ -1201,7 +1201,7 @@ class PostService {
         $lookup: {
           from: "posts",
           localField: "children_post_id",
-          foreignField: "_id", // trường nối
+          foreignField: "_id",
           as: "childrenPost",
         },
       },
@@ -1275,7 +1275,7 @@ class PostService {
       },
     ]);
 
-    if (post[0].childrenPost?.deleted|| post[0].author.isJudge) {
+    if (post[0].childrenPost?.deleted || post[0].author.isJudge) {
       post[0] = null;
     }
 

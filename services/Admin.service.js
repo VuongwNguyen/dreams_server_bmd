@@ -190,7 +190,11 @@ class AdminService {
         message: "Unlock user successfully",
       };
     }
-    AccountService.suspendUser({ user_id, judgeDate: date_of_judge, reason });
+    await AccountService.suspendUser({
+      user_id,
+      judgeDate: date_of_judge,
+      reason,
+    });
 
     user.save({ new: true });
 

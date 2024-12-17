@@ -86,7 +86,7 @@ class AccountService {
       });
 
     // check user is blocked
-    if (user.isJudged?.judgeDate > Date.now())
+    if (user.isJudged?.judgeDate > Date.now() || !user.isJudged.judgeDate)
       throw new ErrorResponse({
         message: "User has been suspended",
         code: 403,
@@ -353,6 +353,7 @@ class AccountService {
     password = null,
   }) {
     let user = await Account.findOne({ email });
+    // check user is blocked
 
     if (!user) {
       user = await Account.create({
@@ -365,6 +366,12 @@ class AccountService {
         password,
         verified: true,
       });
+
+      if (user.isJudged?.judgeDate > Date.now() || !user.isJudged.judgeDate)
+        throw new ErrorResponse({
+          message: "User has been suspended",
+          code: 403,
+        });
 
       if (avatar) user.avatar.url = avatar;
 
@@ -480,6 +487,12 @@ class AccountService {
 
       return tokens;
     }
+
+    if (user.isJudged?.judgeDate > Date.now() || !user.isJudged.judgeDate)
+      throw new ErrorResponse({
+        message: "User has been suspended",
+        code: 403,
+      });
 
     const payload = {
       user_id: user._id,

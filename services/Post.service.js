@@ -118,8 +118,262 @@ class PostService {
         )
       ); // gửi thông báo cho người theo dõi
     }
+    // detail post
 
-    return newPost;
+    const post = await Post.aggregate([
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(newPost._id.toString()),
+          $and: [
+            {
+              $or: [{ violateion: { $exists: false } }, { violateion: null }],
+            },
+          ],
+        },
+      },
+      {
+        $lookup: {
+          from: "accounts",
+          localField: "account_id",
+          foreignField: "_id",
+          as: "author",
+        },
+      },
+      {
+        $unwind: {
+          path: "$author",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "accounts",
+          localField: "tagUsers",
+          foreignField: "_id",
+          as: "tagUsers",
+        },
+      },
+      {
+        $lookup: {
+          from: "hashtags",
+          localField: "hashtags",
+          foreignField: "_id",
+          as: "hashtags",
+        },
+      },
+      {
+        $lookup: {
+          from: "comments",
+          localField: "_id",
+          foreignField: "post_id",
+          as: "comments",
+        },
+      },
+      {
+        $lookup: {
+          from: "follows",
+          let: { following: "$account_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    {
+                      $eq: ["$follower", new mongoose.Types.ObjectId(user_id)],
+                    },
+                    { $eq: ["$following", "$following"] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "followedStatus",
+        },
+      },
+      {
+        $lookup: {
+          from: "posts",
+          let: { postId: "$children_post_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$postId"] } } },
+            {
+              $lookup: {
+                from: "accounts",
+                localField: "account_id",
+                foreignField: "_id",
+                as: "author",
+              },
+            },
+            {
+              $unwind: "$author",
+            },
+            {
+              $lookup: {
+                from: "accounts",
+                localField: "tagUsers",
+                foreignField: "_id",
+                as: "tagUsers",
+              },
+            },
+            {
+              $lookup: {
+                from: "hashtags",
+                localField: "hashtags",
+                foreignField: "_id",
+                as: "hashtags",
+              },
+            },
+            {
+              $lookup: {
+                from: "follows",
+                let: {
+                  followerId: new mongoose.Types.ObjectId(user_id),
+                  followingId: "$account_id",
+                },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ["$follower", "$$followerId"] },
+                          { $eq: ["$following", "$$followingId"] },
+                        ],
+                      },
+                    },
+                  },
+                ],
+                as: "followedStatus",
+              },
+            },
+            {
+              $addFields: {
+                tagUsers: {
+                  $map: {
+                    input: "$tagUsers",
+                    as: "tagUser",
+                    in: {
+                      _id: "$$tagUser._id",
+                      fullname: {
+                        $concat: [
+                          "$$tagUser.first_name",
+                          " ",
+                          "$$tagUser.last_name",
+                        ],
+                      },
+                    },
+                  },
+                },
+                followedStatus: {
+                  $cond: {
+                    if: { $gt: [{ $size: "$followedStatus" }, 0] },
+                    then: true,
+                    else: false,
+                  },
+                },
+              },
+            },
+            {
+              $project: {
+                _id: 1,
+                author: {
+                  _id: "$author._id",
+                  fullname: {
+                    $concat: ["$author.first_name", " ", "$author.last_name"],
+                  },
+                  avatar: "$author.avatar.url",
+                  isJudge: "$author.isJudge",
+                },
+                title: 1,
+                content: 1,
+                createdAt: 1,
+                privacy_status: 1,
+                images: 1,
+                videos: 1,
+                tagUsers: 1,
+                hashtags: 1,
+                deleted: 1,
+              },
+            },
+          ],
+          as: "childrenPost",
+        },
+      },
+      {
+        $addFields: {
+          childrenPost: {
+            $ifNull: [{ $arrayElemAt: ["$childrenPost", 0] }, null],
+          },
+          likeCount: { $size: "$like" },
+          isLiked: { $in: [new mongoose.Types.ObjectId(user_id), "$like"] }, // Kiểm tra người dùng đã like chưa
+          commentCount: { $size: "$comments" },
+          author: {
+            fullname: {
+              $concat: ["$author.first_name", " ", "$author.last_name"],
+            },
+          },
+          tagUsers: {
+            $map: {
+              input: "$tagUsers",
+              as: "tagUser",
+              in: {
+                _id: "$$tagUser._id",
+                fullname: {
+                  $concat: ["$$tagUser.first_name", " ", "$$tagUser.last_name"],
+                },
+              },
+            },
+          },
+          followedStatus: {
+            $cond: {
+              if: { $gt: [{ $size: "$followedStatus" }, 0] },
+              then: true,
+              else: false,
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          author: {
+            _id: 1,
+            fullname: 1,
+            avatar: "$author.avatar.url",
+          },
+          title: 1,
+          content: 1,
+          createdAt: 1,
+          privacy_status: 1,
+          images: {
+            url: 1,
+            _id: 1,
+          },
+          videos: {
+            url: 1,
+            _id: 1,
+          },
+          tagUsers: {
+            _id: 1,
+            fullname: 1,
+          },
+          hashtags: {
+            _id: 1,
+            title: 1,
+          },
+          likeCount: 1,
+          isLiked: 1,
+          followedStatus: 1,
+          commentCount: 1,
+          childrenPost: 1,
+        },
+      },
+    ]);
+
+    if (user_id == post[0].author._id.toString()) {
+      post[0].isSelf = true;
+    }
+
+    return post[0];
   }
 
   async getTrendingPosts({ user_id, _page = 1, _limit = 10 }) {

@@ -86,7 +86,7 @@ class AccountService {
       });
 
     // check user is blocked
-    if (user.isJudged?.judgeDate > Date.now() || !user.isJudged.judgeDate)
+    if (user.isJudged?.judgeDate > Date.now() || user.isJudged?.judgeDate === null)
       throw new ErrorResponse({
         message: "User has been suspended",
         code: 403,
@@ -367,7 +367,7 @@ class AccountService {
         verified: true,
       });
 
-      if (user.isJudged?.judgeDate > Date.now() || !user.isJudged.judgeDate)
+      if (user.isJudged?.judgeDate > Date.now() || user.isJudged?.judgeDate === null)
         throw new ErrorResponse({
           message: "User has been suspended",
           code: 403,
@@ -488,7 +488,7 @@ class AccountService {
       return tokens;
     }
 
-    if (user.isJudged?.judgeDate > Date.now() || !user.isJudged.judgeDate)
+    if (user.isJudged?.judgeDate > Date.now() || user.isJudged?.judgeDate === null)
       throw new ErrorResponse({
         message: "User has been suspended",
         code: 403,

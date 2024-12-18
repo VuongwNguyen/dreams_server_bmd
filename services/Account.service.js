@@ -15,6 +15,7 @@ const verifyObj = { verify: true };
 const StreamChat = require("stream-chat").StreamChat;
 const { STREAM_API_KEY, STREAM_API_SECRET } = process.env;
 const streamClient = StreamChat.getInstance(STREAM_API_KEY, STREAM_API_SECRET);
+ const {set} = require("../middlewares/verifyUser"); 
 
 class AccountService {
   async register(data) {
@@ -325,7 +326,6 @@ class AccountService {
   }
 
   async suspendUser({ user_id, judgeDate, reason }) {
-    console.log(user_id, judgeDate, reason);
     const user = await Account.findOne({ _id: user_id });
 
     if (!user) {
@@ -335,10 +335,14 @@ class AccountService {
       });
     }
 
+
+
     user.isJudged = {
       judgeDate,
       reason,
     };
+
+    set.add(user_id);
 
     await user.save();
   }
@@ -508,5 +512,6 @@ class AccountService {
     return tokens;
   }
 }
+
 
 module.exports = new AccountService();

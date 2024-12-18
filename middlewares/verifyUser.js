@@ -2,6 +2,7 @@ const { ErrorResponse } = require("../core/reponseHandle");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const { Account } = require("../models");
+const set = new Set();
 
 const verifyUser = (req, res, next) => {
   const token = req?.headers?.authorization?.split(" ")[1];
@@ -20,6 +21,16 @@ const verifyUser = (req, res, next) => {
     }
 
     req.user = decode;
+
+    if (set.has(req.user.user_id)) {
+      return next(
+        new ErrorResponse({
+          message: "You are banned",
+          code: 403,
+        })
+      );
+    }
+
     next();
   });
 };
@@ -65,4 +76,4 @@ const verifySuperAdmin = (req, res, next) => {
   next();
 };
 
-module.exports = { verifyUser, verifyAdmin, verifySuperAdmin };
+module.exports = { verifyUser, verifyAdmin, verifySuperAdmin, set };
